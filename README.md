@@ -136,10 +136,7 @@ AI_GC/
 └── README.md            # 本文件
 ```
 
-## 部署与安全
 
-- 📘 **生产部署指南**: 参见 [DEPLOY.md](DEPLOY.md) - 包含 Nginx、HTTPS、systemd 服务配置
-- 🔒 **安全审计报告**: 参见 [SECURITY_AUDIT.md](SECURITY_AUDIT.md) - 详细的安全建议和修复方案
 
 **⚠️ 重要提示**: 生产环境部署前，请务必:
 1. 修改 `.env` 中的默认管理员密码
@@ -167,4 +164,5 @@ A: 检查 API Key 和 Base URL 配置是否正确
 ## License
 
 MIT License
+
 
