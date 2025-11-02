@@ -25,18 +25,47 @@ chmod +x setup.sh start-backend.sh start-frontend.sh
 
 编辑 `backend/.env`:
 ```properties
-# AI 模型配置
-OPENAI_API_KEY=your_api_key
-OPENAI_BASE_URL=http://localhost:8317/v1
+# 数据库配置
+DATABASE_URL=sqlite:///./ai_polish.db
+# 或使用 PostgreSQL: postgresql://user:password@IP/ai_polish
+
+# Redis 配置 (用于并发控制和队列)
+REDIS_URL=redis://IP:6379/0
+
+# OpenAI API 配置
+OPENAI_API_KEY=KEY
+OPENAI_BASE_URL=http://IP:PORT/v1
+
+# 第一阶段模型配置 (论文润色)
+POLISH_MODEL=Gpt-5
+POLISH_API_KEY=KEY
+POLISH_BASE_URL=http://IP:PORT/v1
+
+# 第二阶段模型配置 (原创性增强)
+ENHANCE_MODEL=Gpt-5
+ENHANCE_API_KEY=KEY
+ENHANCE_BASE_URL=http://IP:PORT/v1
+
+# 并发配置
+MAX_CONCURRENT_USERS=7
+
+# 会话压缩配置
+HISTORY_COMPRESSION_THRESHOLD=2000
+COMPRESSION_MODEL=Gpt-5
+
+# JWT 密钥
+SECRET_KEY=JWT-key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
 
 # 管理员账户
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
-
-# 系统设置
-MAX_CONCURRENT_USERS=5
 DEFAULT_USAGE_LIMIT=1
 SEGMENT_SKIP_THRESHOLD=15
+COMPRESSION_API_KEY=KEY
+COMPRESSION_BASE_URL=http://IP:PORT/v1
+
 ```
 
 ### 3. 启动服务
@@ -138,3 +167,4 @@ A: 检查 API Key 和 Base URL 配置是否正确
 ## License
 
 MIT License
+
