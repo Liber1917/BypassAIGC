@@ -1,6 +1,16 @@
 # AI 学术写作助手
 
 专业论文润色与语言优化系统
+<img width="2054" height="924" alt="图片" src="https://github.com/user-attachments/assets/13a8fbbf-3bd8-4fc8-bccd-9b351f7eb9e0" />
+
+ ## 效果
+ 
+朱雀AI检测助手官方示例一
+<img width="1785" height="654" alt="图片" src="https://github.com/user-attachments/assets/4c96dc66-aa43-432e-90a0-57f7d89dd0f2" />
+修改优化后
+ <img width="1946" height="672" alt="图片" src="https://github.com/user-attachments/assets/a46f5d62-30ec-4930-b558-18bd24d0e86f" />
+
+
 
 ## 快速开始
 
@@ -162,6 +172,7 @@ A: 检查 API Key 和 Base URL 配置是否正确
 ## License
 
 MIT License
+
 
 
 
