@@ -35,7 +35,8 @@ chmod +x setup.sh start-backend.sh start-frontend.sh
 ```
 
 ### 2. 配置文件
-自行修改优化Prompt,本项目Prompt只提供简单的例子。
+#### 自行修改优化Prompt,本项目Prompt只提供简单的例子。
+
 编辑 `backend/.env`:
 ```properties
 # 数据库配置
@@ -175,6 +176,7 @@ A: 检查 API Key 和 Base URL 配置是否正确
 ## License
 
 MIT License
+
 
 
 
