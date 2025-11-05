@@ -37,7 +37,7 @@ chmod +x setup.sh start-backend.sh start-frontend.sh
 ```
 
 ### 2. 配置文件
-#### 考虑到可能存在非法利用的问题（比如一些营销号恶意使用），自行修改优化Prompt,本项目内置的Prompt只提供简单的例子。
+#### 考虑到可能存在非法利用的问题（比如一些营销号恶意使用），微调的提示词不公开,可以在ai_service.py替换,自行修改优化Prompt,本项目内置的Prompt只提供简单的例子。
 
 编辑 `backend/.env`:
 ```properties
@@ -181,6 +181,7 @@ A: 检查 API Key 和 Base URL 配置是否正确
 ## License
 
 MIT License
+
 
 
 
