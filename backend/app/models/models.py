@@ -47,17 +47,17 @@ class OptimizationSession(Base):
     __tablename__ = "optimization_sessions"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
     session_id = Column(String(255), unique=True, index=True)
     original_text = Column(Text)
     current_stage = Column(String(50))  # 'polish' 或 'enhance'
-    status = Column(String(50))  # 'queued', 'processing', 'completed', 'failed'
+    status = Column(String(50), index=True)  # 'queued', 'processing', 'completed', 'failed'
     progress = Column(Float, default=0.0)
     current_position = Column(Integer, default=0)  # 当前处理的段落位置
     total_segments = Column(Integer, default=0)  # 总段落数
     error_message = Column(Text, nullable=True)
     failed_segment_index = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
     
@@ -91,13 +91,13 @@ class OptimizationSegment(Base):
     __tablename__ = "optimization_segments"
     
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("optimization_sessions.id"))
-    segment_index = Column(Integer)  # 段落序号
+    session_id = Column(Integer, ForeignKey("optimization_sessions.id"), index=True)
+    segment_index = Column(Integer, index=True)  # 段落序号
     stage = Column(String(50))  # 'polish' 或 'enhance'
     original_text = Column(Text)
     polished_text = Column(Text, nullable=True)
     enhanced_text = Column(Text, nullable=True)
-    status = Column(String(50))  # 'pending', 'processing', 'completed', 'failed'
+    status = Column(String(50), index=True)  # 'pending', 'processing', 'completed', 'failed'
     is_title = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
@@ -127,9 +127,9 @@ class ChangeLog(Base):
     __tablename__ = "change_logs"
     
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("optimization_sessions.id"))
-    segment_index = Column(Integer)
-    stage = Column(String(50))  # 'polish' 或 'enhance'
+    session_id = Column(Integer, ForeignKey("optimization_sessions.id"), index=True)
+    segment_index = Column(Integer, index=True)
+    stage = Column(String(50), index=True)  # 'polish' 或 'enhance'
     before_text = Column(Text)
     after_text = Column(Text)
     changes_detail = Column(Text)  # JSON格式的详细变更

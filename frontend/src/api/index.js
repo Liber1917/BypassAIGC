@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: '/api',
-  timeout: 300000, // 5分钟超时
+  timeout: 30000, // 默认30秒超时，各端点可单独覆盖
 });
 
 // 请求拦截器
@@ -72,24 +72,41 @@ export const promptsAPI = {
 
 // Optimization API
 export const optimizationAPI = {
-  startOptimization: (data) => api.post('/optimization/start', data),
+  startOptimization: (data) => api.post('/optimization/start', data, {
+    timeout: 60000, // 启动任务延长到60秒超时
+  }),
   getQueueStatus: (sessionId = null) =>
     api.get('/optimization/status', {
       params: sessionId ? { session_id: sessionId } : {},
+      timeout: 10000, // 10秒超时
     }),
-  listSessions: () => api.get('/optimization/sessions'),
+  listSessions: () => api.get('/optimization/sessions', {
+    timeout: 15000, // 15秒超时
+  }),
   getSessionDetail: (sessionId) =>
-    api.get(`/optimization/sessions/${sessionId}`),
+    api.get(`/optimization/sessions/${sessionId}`, {
+      timeout: 20000, // 20秒超时
+    }),
   getSessionProgress: (sessionId) =>
-    api.get(`/optimization/sessions/${sessionId}/progress`),
+    api.get(`/optimization/sessions/${sessionId}/progress`, {
+      timeout: 10000, // 10秒超时
+    }),
   getSessionChanges: (sessionId) =>
-    api.get(`/optimization/sessions/${sessionId}/changes`),
+    api.get(`/optimization/sessions/${sessionId}/changes`, {
+      timeout: 20000, // 20秒超时
+    }),
   exportSession: (sessionId, confirmation) =>
-    api.post(`/optimization/sessions/${sessionId}/export`, confirmation),
+    api.post(`/optimization/sessions/${sessionId}/export`, confirmation, {
+      timeout: 30000, // 30秒超时
+    }),
   deleteSession: (sessionId) =>
-    api.delete(`/optimization/sessions/${sessionId}`),
+    api.delete(`/optimization/sessions/${sessionId}`, {
+      timeout: 10000, // 10秒超时
+    }),
     retryFailedSegments: (sessionId) =>
-      api.post(`/optimization/sessions/${sessionId}/retry`),
+      api.post(`/optimization/sessions/${sessionId}/retry`, null, {
+        timeout: 15000, // 15秒超时
+      }),
 };
 
 export default api;
