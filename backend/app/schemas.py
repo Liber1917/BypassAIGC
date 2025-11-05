@@ -34,8 +34,11 @@ class ModelConfig(BaseModel):
 class OptimizationCreate(BaseModel):
     """创建优化任务"""
     original_text: str
+    processing_mode: str = Field(default='paper_polish_enhance', 
+                                  description='处理模式: paper_polish, paper_polish_enhance, emotion_polish')
     polish_config: Optional[ModelConfig] = None
     enhance_config: Optional[ModelConfig] = None
+    emotion_config: Optional[ModelConfig] = None
 
 
 class SegmentResponse(BaseModel):
