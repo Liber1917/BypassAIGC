@@ -167,15 +167,18 @@ fi
 echo -e "\n${YELLOW}验证数据库配置...${NC}"
 cd backend
 source venv/bin/activate
-python init_db.py > /dev/null 2>&1
+DB_LOG="/tmp/bypassaigc-db-setup-$$.log"
+python init_db.py > "$DB_LOG" 2>&1
 DB_CHECK=$?
 deactivate
 cd ..
 
 if [ $DB_CHECK -eq 0 ]; then
     echo -e "${GREEN}✓ 数据库验证成功${NC}"
+    rm -f "$DB_LOG"
 else
     echo -e "${YELLOW}⚠ 数据库验证警告（首次运行时会自动初始化）${NC}"
+    echo -e "${CYAN}详细日志: $DB_LOG${NC}"
 fi
 
 # 完成

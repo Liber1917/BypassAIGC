@@ -55,21 +55,25 @@ if [ -d "$SCRIPT_DIR/backend/venv" ]; then
     echo -e "${GREEN}✓ 虚拟环境存在${NC}"
     
     # 检查关键依赖
-    source "$SCRIPT_DIR/backend/venv/bin/activate"
-    if python -c "import fastapi" 2>/dev/null; then
-        echo -e "${GREEN}✓ FastAPI 已安装${NC}"
+    if source "$SCRIPT_DIR/backend/venv/bin/activate" 2>/dev/null; then
+        if python -c "import fastapi" 2>/dev/null; then
+            echo -e "${GREEN}✓ FastAPI 已安装${NC}"
+        else
+            echo -e "${RED}× FastAPI 未安装${NC}"
+            ERRORS=$((ERRORS + 1))
+        fi
+        
+        if python -c "import sqlalchemy" 2>/dev/null; then
+            echo -e "${GREEN}✓ SQLAlchemy 已安装${NC}"
+        else
+            echo -e "${RED}× SQLAlchemy 未安装${NC}"
+            ERRORS=$((ERRORS + 1))
+        fi
+        deactivate
     else
-        echo -e "${RED}× FastAPI 未安装${NC}"
+        echo -e "${RED}× 无法激活虚拟环境${NC}"
         ERRORS=$((ERRORS + 1))
     fi
-    
-    if python -c "import sqlalchemy" 2>/dev/null; then
-        echo -e "${GREEN}✓ SQLAlchemy 已安装${NC}"
-    else
-        echo -e "${RED}× SQLAlchemy 未安装${NC}"
-        ERRORS=$((ERRORS + 1))
-    fi
-    deactivate
 else
     echo -e "${RED}× 虚拟环境不存在${NC}"
     ERRORS=$((ERRORS + 1))
