@@ -79,10 +79,10 @@ POLISH_BASE_URL=http://IP:PORT/v1
 ENHANCE_MODEL=GPT-5
 ENHANCE_API_KEY=KEY
 ENHANCE_BASE_URL=http://IP:PORT/v1
-    # 感情文章润色模型配置
+# 感情文章润色模型配置
 EMOTION_MODEL = GPT-5
-EMOTION_API_KEY: = KEY
-EMOTION_BASE_URL: = http://IP:PORT/v1
+EMOTION_API_KEY = KEY
+EMOTION_BASE_URL = http://IP:PORT/v1
 # 并发配置
 MAX_CONCURRENT_USERS=7
 
@@ -257,6 +257,7 @@ A: 检查 API Key 和 Base URL 配置是否正确
 ## License
 未经允许禁止商业使用
 Creative Commons (CC BY-NC-SA 4.0)
+
 
 
 
