@@ -1,4 +1,4 @@
-# AI 学术写作助手
+## AI 学术写作助手
 
 专业论文润色与语言优化系统
 <img width="2178" height="1346" alt="图片" src="https://github.com/user-attachments/assets/98bd2aa2-93b7-405e-8edc-aaec76a19b1e" />
@@ -62,9 +62,9 @@ ENHANCE_MODEL=GPT-5
 ENHANCE_API_KEY=KEY
 ENHANCE_BASE_URL=http://IP:PORT/v1
     # 感情文章润色模型配置
-EMOTION_MODEL: Optional[str] = GPT-5
-EMOTION_API_KEY: Optional[str] = KEY
-EMOTION_BASE_URL: Optional[str] = http://IP:PORT/v1
+EMOTION_MODEL = GPT-5
+EMOTION_API_KEY: = KEY
+EMOTION_BASE_URL: = http://IP:PORT/v1
 # 并发配置
 MAX_CONCURRENT_USERS=7
 
@@ -183,6 +183,7 @@ A: 检查 API Key 和 Base URL 配置是否正确
 ## License
 
 MIT License
+
 
 
 
