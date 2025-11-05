@@ -1,16 +1,23 @@
 #!/bin/bash
 # 启动后端服务
+# 适用于 Linux/Ubuntu/macOS
 
 # 颜色定义
+RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-echo -e "${CYAN}启动后端服务...${NC}"
+echo -e "\n${CYAN}========================================${NC}"
+echo -e "${CYAN}启动后端服务${NC}"
+echo -e "${CYAN}========================================${NC}\n"
+
+# 获取脚本所在目录
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # 进入后端目录
-cd "$(dirname "$0")/backend" || exit 1
+cd "$SCRIPT_DIR/backend" || exit 1
 
 # 检查虚拟环境
 if [ ! -d "venv" ]; then
@@ -42,9 +49,15 @@ if [ ! -f "ai_polish.db" ]; then
 fi
 
 # 启动服务
+echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}✓ 后端服务启动中...${NC}"
-echo -e "${CYAN}访问地址: http://localhost:8000${NC}"
-echo -e "${CYAN}API 文档: http://localhost:8000/docs${NC}"
+echo -e "${GREEN}========================================${NC}"
+echo -e "${CYAN}访问地址:${NC}"
+echo -e "  API: ${YELLOW}http://localhost:8000${NC}"
+echo -e "  文档: ${YELLOW}http://localhost:8000/docs${NC}"
+echo -e "  健康检查: ${YELLOW}http://localhost:8000/health${NC}"
+echo -e "${GREEN}========================================${NC}"
 echo -e "${YELLOW}按 Ctrl+C 停止服务${NC}\n"
 
+# 启动 uvicorn
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

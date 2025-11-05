@@ -23,28 +23,105 @@ def get_db():
 
 
 def init_db():
-    """初始化数据库"""
-    # 导入所有模型以确保它们被注册到 Base.metadata
-    from app.models import models  # noqa: F401
-    
-    Base.metadata.create_all(bind=engine)
-    # 确保新增列在旧数据表中可用
-    with engine.connect() as conn:
-        inspector = inspect(conn)
-        columns = {column["name"] for column in inspector.get_columns("optimization_sessions")}
-        if "failed_segment_index" not in columns:
-            conn.execute(text("ALTER TABLE optimization_sessions ADD COLUMN failed_segment_index INTEGER"))
-            conn.commit()
+    """初始化数据库 - 安全地创建或更新数据库结构"""
+    try:
+        # 导入所有模型以确保它们被注册到 Base.metadata
+        from app.models import models  # noqa: F401
+        
+        # 创建所有表（如果不存在）
+        Base.metadata.create_all(bind=engine)
+        
+        # 检查并添加可能缺失的列（用于数据库迁移）
+        _migrate_database_schema()
+        
+        print("✓ 数据库初始化成功")
+        return True
+    except Exception as e:
+        print(f"✗ 数据库初始化失败: {str(e)}")
+        raise
 
-        user_columns = {column["name"] for column in inspector.get_columns("users")}
-        if "usage_limit" not in user_columns:
-            conn.execute(text(f"ALTER TABLE users ADD COLUMN usage_limit INTEGER DEFAULT {settings.DEFAULT_USAGE_LIMIT}"))
-        if "usage_count" not in user_columns:
-            conn.execute(text("ALTER TABLE users ADD COLUMN usage_count INTEGER DEFAULT 0"))
-        conn.execute(text(f"UPDATE users SET usage_limit = {settings.DEFAULT_USAGE_LIMIT} WHERE usage_limit IS NULL"))
-        conn.execute(text("UPDATE users SET usage_count = 0 WHERE usage_count IS NULL"))
 
-        segment_columns = {column["name"] for column in inspector.get_columns("optimization_segments")}
-        if "is_title" not in segment_columns:
-            conn.execute(text("ALTER TABLE optimization_segments ADD COLUMN is_title BOOLEAN DEFAULT 0"))
+def _add_column_safely(conn, table_name, column_name, column_def):
+    """安全地添加列（如果不存在）"""
+    try:
+        conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_def}"))
         conn.commit()
+        return True
+    except Exception as e:
+        # 列可能已存在或其他错误
+        conn.rollback()
+        return False
+
+
+def _migrate_database_schema():
+    """迁移数据库结构 - 添加新列到已存在的表"""
+    try:
+        inspector = inspect(engine)
+        
+        # 检查表是否存在
+        tables = inspector.get_table_names()
+        
+        with engine.connect() as conn:
+            
+                # 迁移 optimization_sessions 表
+                if "optimization_sessions" in tables:
+                    columns = {column["name"] for column in inspector.get_columns("optimization_sessions")}
+                    
+                    if "failed_segment_index" not in columns:
+                        if _add_column_safely(conn, "optimization_sessions", "failed_segment_index", "INTEGER"):
+                            print("  ✓ 添加字段: optimization_sessions.failed_segment_index")
+                    
+                    if "processing_mode" not in columns:
+                        if _add_column_safely(conn, "optimization_sessions", "processing_mode", "VARCHAR(50) DEFAULT 'paper_polish_enhance'"):
+                            print("  ✓ 添加字段: optimization_sessions.processing_mode")
+                    
+                    if "emotion_model" not in columns:
+                        added = _add_column_safely(conn, "optimization_sessions", "emotion_model", "VARCHAR(100)")
+                        _add_column_safely(conn, "optimization_sessions", "emotion_api_key", "VARCHAR(255)")
+                        _add_column_safely(conn, "optimization_sessions", "emotion_base_url", "VARCHAR(255)")
+                        if added:
+                            print("  ✓ 添加字段: optimization_sessions.emotion_* 字段")
+            
+                # 迁移 users 表
+                if "users" in tables:
+                    user_columns = {column["name"] for column in inspector.get_columns("users")}
+                    
+                    if "usage_limit" not in user_columns:
+                        if _add_column_safely(conn, "users", "usage_limit", f"INTEGER DEFAULT {settings.DEFAULT_USAGE_LIMIT}"):
+                            print("  ✓ 添加字段: users.usage_limit")
+                    
+                    if "usage_count" not in user_columns:
+                        if _add_column_safely(conn, "users", "usage_count", "INTEGER DEFAULT 0"):
+                            print("  ✓ 添加字段: users.usage_count")
+                    
+                    # 更新 NULL 值
+                    try:
+                        conn.execute(text(f"UPDATE users SET usage_limit = {settings.DEFAULT_USAGE_LIMIT} WHERE usage_limit IS NULL"))
+                        conn.execute(text("UPDATE users SET usage_count = 0 WHERE usage_count IS NULL"))
+                        conn.commit()
+                    except Exception:
+                        conn.rollback()
+            
+                # 迁移 optimization_segments 表
+                if "optimization_segments" in tables:
+                    segment_columns = {column["name"] for column in inspector.get_columns("optimization_segments")}
+                    
+                    if "is_title" not in segment_columns:
+                        if _add_column_safely(conn, "optimization_segments", "is_title", "BOOLEAN DEFAULT 0"):
+                            print("  ✓ 添加字段: optimization_segments.is_title")
+            
+                # 迁移 custom_prompts 表
+                if "custom_prompts" in tables:
+                    prompt_columns = {column["name"] for column in inspector.get_columns("custom_prompts")}
+                    
+                    if "is_system" not in prompt_columns:
+                        if _add_column_safely(conn, "custom_prompts", "is_system", "BOOLEAN DEFAULT 0"):
+                            print("  ✓ 添加字段: custom_prompts.is_system")
+                    
+                    if "is_active" not in prompt_columns:
+                        if _add_column_safely(conn, "custom_prompts", "is_active", "BOOLEAN DEFAULT 1"):
+                            print("  ✓ 添加字段: custom_prompts.is_active")
+    
+    except Exception as e:
+        print(f"  ⚠ 数据库迁移警告: {str(e)}")
+        # 迁移失败不应该阻止应用启动

@@ -67,7 +67,7 @@ if ($LASTEXITCODE -eq 0) {
 cd ..
 
 # 配置 .env 文件
-Write-Host "`n[5/5] 配置环境变量..." -ForegroundColor Yellow
+Write-Host "`n检查配置文件..." -ForegroundColor Yellow
 if (-not (Test-Path "backend\.env")) {
     Write-Host "生成 .env 配置文件..." -ForegroundColor Cyan
     
@@ -131,11 +131,25 @@ SEGMENT_SKIP_THRESHOLD=15
     }
 }
 
+# 验证数据库
+Write-Host "`n验证数据库配置..." -ForegroundColor Yellow
+cd backend
+& .\venv\Scripts\python.exe init_db.py > $null 2>&1
+$dbCheck = $LASTEXITCODE
+cd ..
+
+if ($dbCheck -eq 0) {
+    Write-Host "✓ 数据库验证成功" -ForegroundColor Green
+} else {
+    Write-Host "⚠ 数据库验证警告（首次运行时会自动初始化）" -ForegroundColor Yellow
+}
+
 # 完成
 Write-Host "`n========================================" -ForegroundColor Green
 Write-Host "✓ 环境配置完成!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host "`n下一步操作:" -ForegroundColor Cyan
 Write-Host "  1. 编辑配置: notepad backend\.env" -ForegroundColor White
-Write-Host "  2. 启动系统: .\start-all.ps1`n" -ForegroundColor White
+Write-Host "  2. 验证数据库: .\verify-database.ps1 (可选)" -ForegroundColor White
+Write-Host "  3. 启动系统: .\start-all.ps1`n" -ForegroundColor White
 pause

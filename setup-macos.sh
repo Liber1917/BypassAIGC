@@ -1,5 +1,5 @@
 #!/bin/bash
-# Ubuntu/Linux 环境安装脚本
+# macOS 环境安装脚本
 
 # 颜色定义
 RED='\033[0;31m'
@@ -9,11 +9,37 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 echo -e "\n${CYAN}========================================${NC}"
-echo -e "${CYAN}AI 学术写作助手 - 环境配置${NC}"
+echo -e "${CYAN}AI 学术写作助手 - macOS 环境配置${NC}"
 echo -e "${CYAN}========================================${NC}\n"
 
+# 检查操作系统
+if [[ "$OSTYPE" != "darwin"* ]]; then
+    echo -e "${RED}× 此脚本仅适用于 macOS${NC}"
+    echo -e "${YELLOW}Linux/Ubuntu 请使用: ./setup.sh${NC}\n"
+    exit 1
+fi
+
+# 检查 Homebrew
+echo -e "${YELLOW}[1/5] 检查 Homebrew...${NC}"
+if command -v brew &> /dev/null; then
+    BREW_VERSION=$(brew --version | head -n 1)
+    echo -e "${GREEN}✓ $BREW_VERSION${NC}"
+else
+    echo -e "${YELLOW}× Homebrew 未安装${NC}"
+    echo -e "${CYAN}正在安装 Homebrew...${NC}"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Homebrew 安装完成${NC}"
+    else
+        echo -e "${RED}× Homebrew 安装失败${NC}"
+        echo -e "${YELLOW}请手动安装: https://brew.sh/${NC}\n"
+        exit 1
+    fi
+fi
+
 # 检查 Python3
-echo -e "${YELLOW}[1/4] 检查 Python3...${NC}"
+echo -e "\n${YELLOW}[2/5] 检查 Python3...${NC}"
 if command -v python3 &> /dev/null; then
     PY_VERSION=$(python3 --version)
     echo -e "${GREEN}✓ $PY_VERSION${NC}"
@@ -22,18 +48,33 @@ if command -v python3 &> /dev/null; then
     PY_MAJOR=$(python3 -c 'import sys; print(sys.version_info.major)')
     PY_MINOR=$(python3 -c 'import sys; print(sys.version_info.minor)')
     if [ "$PY_MAJOR" -lt 3 ] || ([ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -lt 10 ]); then
-        echo -e "${RED}× Python 版本过低,需要 3.10+${NC}"
-        echo -e "${YELLOW}请升级 Python: sudo apt update && sudo apt install python3.10${NC}\n"
-        exit 1
+        echo -e "${YELLOW}Python 版本过低，正在安装 Python 3.11...${NC}"
+        brew install python@3.11
+        
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✓ Python 3.11 安装完成${NC}"
+            # 更新 PATH
+            export PATH="/opt/homebrew/opt/python@3.11/bin:$PATH"
+        else
+            echo -e "${RED}× Python 安装失败${NC}\n"
+            exit 1
+        fi
     fi
 else
-    echo -e "${RED}× Python3 未安装${NC}"
-    echo -e "${YELLOW}安装 Python3: sudo apt update && sudo apt install python3 python3-pip python3-venv${NC}\n"
-    exit 1
+    echo -e "${YELLOW}Python3 未安装，正在通过 Homebrew 安装...${NC}"
+    brew install python@3.11
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Python 安装完成${NC}"
+        export PATH="/opt/homebrew/opt/python@3.11/bin:$PATH"
+    else
+        echo -e "${RED}× Python 安装失败${NC}\n"
+        exit 1
+    fi
 fi
 
 # 检查 Node.js
-echo -e "${YELLOW}[2/4] 检查 Node.js...${NC}"
+echo -e "\n${YELLOW}[3/5] 检查 Node.js...${NC}"
 if command -v node &> /dev/null; then
     NODE_VERSION=$(node --version)
     echo -e "${GREEN}✓ Node.js $NODE_VERSION${NC}"
@@ -41,28 +82,30 @@ if command -v node &> /dev/null; then
     # 检查版本是否 >= 16
     NODE_MAJOR=$(node -p 'process.version.split(".")[0].slice(1)')
     if [ "$NODE_MAJOR" -lt 16 ]; then
-        echo -e "${RED}× Node.js 版本过低,需要 16+${NC}"
-        echo -e "${YELLOW}请升级 Node.js: https://nodejs.org/${NC}\n"
-        exit 1
+        echo -e "${YELLOW}Node.js 版本过低，正在升级...${NC}"
+        brew upgrade node
     fi
 else
-    echo -e "${RED}× Node.js 未安装${NC}"
-    echo -e "${YELLOW}安装 Node.js:${NC}"
-    echo -e "${YELLOW}  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -${NC}"
-    echo -e "${YELLOW}  sudo apt install -y nodejs${NC}\n"
-    exit 1
+    echo -e "${YELLOW}Node.js 未安装，正在通过 Homebrew 安装...${NC}"
+    brew install node
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Node.js 安装完成${NC}"
+    else
+        echo -e "${RED}× Node.js 安装失败${NC}\n"
+        exit 1
+    fi
 fi
 
 # 安装后端依赖
-echo -e "\n${YELLOW}[3/4] 配置后端环境...${NC}"
+echo -e "\n${YELLOW}[4/5] 配置后端环境...${NC}"
 cd backend
 
 if [ ! -d "venv" ]; then
     echo -e "${CYAN}创建虚拟环境...${NC}"
     python3 -m venv venv
     if [ $? -ne 0 ]; then
-        echo -e "${RED}× 虚拟环境创建失败,请安装 python3-venv${NC}"
-        echo -e "${YELLOW}  sudo apt install python3-venv${NC}\n"
+        echo -e "${RED}× 虚拟环境创建失败${NC}\n"
         exit 1
     fi
 fi
@@ -84,7 +127,7 @@ deactivate
 cd ..
 
 # 安装前端依赖
-echo -e "\n${YELLOW}[4/4] 配置前端环境...${NC}"
+echo -e "\n${YELLOW}[5/5] 配置前端环境...${NC}"
 cd frontend
 
 echo -e "${CYAN}安装 npm 依赖 (可能需要几分钟)...${NC}"
@@ -158,7 +201,7 @@ else
         echo -e "\n${RED}⚠️  警告: 检测到默认 SECRET_KEY!${NC}"
         echo -e "${YELLOW}生成新的强密钥...${NC}"
         NEW_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
-        sed -i "s/SECRET_KEY=your-secret-key-change-this-in-production/SECRET_KEY=$NEW_SECRET_KEY/" backend/.env
+        sed -i '' "s/SECRET_KEY=your-secret-key-change-this-in-production/SECRET_KEY=$NEW_SECRET_KEY/" backend/.env
         echo -e "${GREEN}✓ 已更新 SECRET_KEY 为强随机密钥${NC}"
     fi
 fi
@@ -167,37 +210,36 @@ fi
 echo -e "\n${YELLOW}验证数据库配置...${NC}"
 cd backend
 source venv/bin/activate
-DB_LOG="/tmp/bypassaigc-db-setup-$$.log"
-python init_db.py > "$DB_LOG" 2>&1
+python init_db.py > /dev/null 2>&1
 DB_CHECK=$?
 deactivate
 cd ..
 
 if [ $DB_CHECK -eq 0 ]; then
     echo -e "${GREEN}✓ 数据库验证成功${NC}"
-    rm -f "$DB_LOG"
 else
     echo -e "${YELLOW}⚠ 数据库验证警告（首次运行时会自动初始化）${NC}"
-    echo -e "${CYAN}详细日志: $DB_LOG${NC}"
 fi
 
 # 完成
 echo -e "\n${GREEN}========================================${NC}"
-echo -e "${GREEN}✓ 环境配置完成!${NC}"
+echo -e "${GREEN}✓ macOS 环境配置完成!${NC}"
 echo -e "${GREEN}========================================${NC}\n"
 
 echo -e "${CYAN}下一步操作:${NC}"
 echo -e "  1. 配置 API 密钥: ${YELLOW}nano backend/.env${NC}"
-echo -e "  2. 验证数据库: ${YELLOW}./verify-database.sh${NC} ${CYAN}(可选)${NC}"
+echo -e "  2. 验证安装: ${YELLOW}./verify-installation.sh${NC} ${CYAN}(可选)${NC}"
 echo -e "  3. 启动后端服务: ${YELLOW}./start-backend.sh${NC}"
 echo -e "  4. 启动前端服务: ${YELLOW}./start-frontend.sh${NC}"
 echo -e "\n${CYAN}或使用一键启动:${NC}"
 echo -e "  ${YELLOW}./start-all.sh${NC}"
-echo -e "\n${CYAN}或使用 systemd 设置开机自启:${NC}"
-echo -e "  查看文档: ${YELLOW}cat DEPLOY.md${NC}\n"
+echo -e "\n${CYAN}macOS 特殊说明:${NC}"
+echo -e "  • 使用 ${YELLOW}Cmd+C${NC} 停止服务"
+echo -e "  • 推荐安装 ${YELLOW}tmux${NC}: brew install tmux"
+echo -e "  • 如遇权限问题，使用: ${YELLOW}chmod +x *.sh${NC}\n"
 
 # 提示权限问题
 if [ ! -x "$0" ]; then
     echo -e "${YELLOW}提示: 如需直接执行脚本,请添加执行权限:${NC}"
-    echo -e "  ${CYAN}chmod +x setup.sh${NC}\n"
+    echo -e "  ${CYAN}chmod +x setup-macos.sh start-*.sh${NC}\n"
 fi
