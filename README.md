@@ -255,8 +255,9 @@ A: 运行 `./verify-database.sh` 查看详细错误信息
 A: 检查 API Key 和 Base URL 配置是否正确
 
 ## License
-
+未经允许禁止商业使用
 MIT License
+
 
 
 
