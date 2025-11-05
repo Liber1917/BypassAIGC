@@ -51,21 +51,24 @@ OPENAI_API_KEY=KEY
 OPENAI_BASE_URL=http://IP:PORT/v1
 
 # 第一阶段模型配置 (论文润色)
-POLISH_MODEL=Gpt-5
+POLISH_MODEL=GPT-5
 POLISH_API_KEY=KEY
 POLISH_BASE_URL=http://IP:PORT/v1
 
 # 第二阶段模型配置 (原创性增强)
-ENHANCE_MODEL=Gpt-5
+ENHANCE_MODEL=GPT-5
 ENHANCE_API_KEY=KEY
 ENHANCE_BASE_URL=http://IP:PORT/v1
-
+    # 感情文章润色模型配置
+EMOTION_MODEL: Optional[str] = GPT-5
+EMOTION_API_KEY: Optional[str] = KEY
+EMOTION_BASE_URL: Optional[str] = http://IP:PORT/v1
 # 并发配置
 MAX_CONCURRENT_USERS=7
 
 # 会话压缩配置
 HISTORY_COMPRESSION_THRESHOLD=2000
-COMPRESSION_MODEL=Gpt-5
+COMPRESSION_MODEL=GPT-5
 
 # JWT 密钥
 SECRET_KEY=JWT-key
@@ -176,6 +179,7 @@ A: 检查 API Key 和 Base URL 配置是否正确
 ## License
 
 MIT License
+
 
 
 
