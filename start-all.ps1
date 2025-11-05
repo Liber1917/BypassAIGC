@@ -5,7 +5,7 @@ Write-Host "========================================`n" -ForegroundColor Cyan
 
 # 启动后端
 Write-Host "[1/2] 启动后端服务..." -ForegroundColor Green
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd backend; .\venv\Scripts\python3.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd backend; .\venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
 # 等待后端启动
 Start-Sleep -Seconds 3

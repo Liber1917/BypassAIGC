@@ -163,6 +163,21 @@ else
     fi
 fi
 
+# 验证数据库
+echo -e "\n${YELLOW}验证数据库配置...${NC}"
+cd backend
+source venv/bin/activate
+python init_db.py > /dev/null 2>&1
+DB_CHECK=$?
+deactivate
+cd ..
+
+if [ $DB_CHECK -eq 0 ]; then
+    echo -e "${GREEN}✓ 数据库验证成功${NC}"
+else
+    echo -e "${YELLOW}⚠ 数据库验证警告（首次运行时会自动初始化）${NC}"
+fi
+
 # 完成
 echo -e "\n${GREEN}========================================${NC}"
 echo -e "${GREEN}✓ 环境配置完成!${NC}"
@@ -170,8 +185,11 @@ echo -e "${GREEN}========================================${NC}\n"
 
 echo -e "${CYAN}下一步操作:${NC}"
 echo -e "  1. 配置 API 密钥: ${YELLOW}nano backend/.env${NC}"
-echo -e "  2. 启动后端服务: ${YELLOW}./start-backend.sh${NC}"
-echo -e "  3. 启动前端服务: ${YELLOW}./start-frontend.sh${NC}"
+echo -e "  2. 验证数据库: ${YELLOW}./verify-database.sh${NC} ${CYAN}(可选)${NC}"
+echo -e "  3. 启动后端服务: ${YELLOW}./start-backend.sh${NC}"
+echo -e "  4. 启动前端服务: ${YELLOW}./start-frontend.sh${NC}"
+echo -e "\n${CYAN}或使用一键启动:${NC}"
+echo -e "  ${YELLOW}./start-all.sh${NC}"
 echo -e "\n${CYAN}或使用 systemd 设置开机自启:${NC}"
 echo -e "  查看文档: ${YELLOW}cat DEPLOY.md${NC}\n"
 
