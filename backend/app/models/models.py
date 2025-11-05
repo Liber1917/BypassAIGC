@@ -68,6 +68,12 @@ class OptimizationSession(Base):
     enhance_model = Column(String(100), nullable=True)
     enhance_api_key = Column(String(255), nullable=True)
     enhance_base_url = Column(String(255), nullable=True)
+    emotion_model = Column(String(100), nullable=True)
+    emotion_api_key = Column(String(255), nullable=True)
+    emotion_base_url = Column(String(255), nullable=True)
+    
+    # 处理模式: 'paper_polish', 'paper_polish_enhance', 'emotion_polish'
+    processing_mode = Column(String(50), default='paper_polish_enhance')
     
     # 关系
     user = relationship("User", back_populates="sessions")
