@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     COMPRESSION_API_KEY: Optional[str] = None
     COMPRESSION_BASE_URL: Optional[str] = None
     
+    # 感情文章润色模型配置
+    EMOTION_MODEL: Optional[str] = None
+    EMOTION_API_KEY: Optional[str] = None
+    EMOTION_BASE_URL: Optional[str] = None
     # JWT 密钥
     SECRET_KEY: str = "your-secret-key-change-this-in-production"
     ALGORITHM: str = "HS256"
@@ -83,3 +87,4 @@ def reload_settings():
                             setattr(settings, key, value)
     
     return settings
+
