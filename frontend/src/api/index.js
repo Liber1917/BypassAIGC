@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: '/api',
-  timeout: 30000, // 30秒超时（除了启动优化任务）
+  timeout: 30000, // 默认30秒超时，各端点可单独覆盖
 });
 
 // 请求拦截器

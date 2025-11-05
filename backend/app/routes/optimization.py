@@ -177,19 +177,11 @@ async def get_session_progress(
     card_key: str,
     db: Session = Depends(get_db)
 ):
-    """获取会话进度（优化查询，只返回必要字段）"""
+    """获取会话进度"""
     user = get_current_user(card_key, db)
     
-    # 只查询需要的字段，避免加载大文本字段
-    session = db.query(
-        OptimizationSession.session_id,
-        OptimizationSession.status,
-        OptimizationSession.progress,
-        OptimizationSession.current_position,
-        OptimizationSession.total_segments,
-        OptimizationSession.current_stage,
-        OptimizationSession.error_message
-    ).filter(
+    # 查询完整会话对象，但避免急切加载关联对象
+    session = db.query(OptimizationSession).filter(
         OptimizationSession.session_id == session_id,
         OptimizationSession.user_id == user.id
     ).first()

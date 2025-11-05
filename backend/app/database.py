@@ -95,16 +95,10 @@ def _add_performance_indexes():
                     if index_name in index_names:
                         continue
                     
-                    # 创建索引
-                    if 'sqlite' in settings.DATABASE_URL:
-                        conn.execute(text(
-                            f"CREATE INDEX IF NOT EXISTS {index_name} ON {table_name} ({column_name})"
-                        ))
-                    else:
-                        # PostgreSQL
-                        conn.execute(text(
-                            f"CREATE INDEX IF NOT EXISTS {index_name} ON {table_name} ({column_name})"
-                        ))
+                    # 创建索引（SQLite 和 PostgreSQL 都支持相同语法）
+                    conn.execute(text(
+                        f"CREATE INDEX IF NOT EXISTS {index_name} ON {table_name} ({column_name})"
+                    ))
                     conn.commit()
                     print(f"  ✓ 添加索引: {index_name}")
                     
