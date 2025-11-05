@@ -126,14 +126,19 @@ async def get_queue_status(
 @router.get("/sessions", response_model=List[SessionResponse])
 async def list_sessions(
     card_key: str,
+    limit: int = 20,
+    offset: int = 0,
     db: Session = Depends(get_db)
 ):
-    """列出用户的所有会话"""
+    """列出用户的所有会话（支持分页）"""
     user = get_current_user(card_key, db)
+    
+    # 限制最大返回数量为100，避免一次性加载过多数据
+    limit = min(limit, 100)
     
     sessions = db.query(OptimizationSession).filter(
         OptimizationSession.user_id == user.id
-    ).order_by(OptimizationSession.created_at.desc()).all()
+    ).order_by(OptimizationSession.created_at.desc()).limit(limit).offset(offset).all()
     
     return sessions
 
@@ -172,10 +177,19 @@ async def get_session_progress(
     card_key: str,
     db: Session = Depends(get_db)
 ):
-    """获取会话进度"""
+    """获取会话进度（优化查询，只返回必要字段）"""
     user = get_current_user(card_key, db)
     
-    session = db.query(OptimizationSession).filter(
+    # 只查询需要的字段，避免加载大文本字段
+    session = db.query(
+        OptimizationSession.session_id,
+        OptimizationSession.status,
+        OptimizationSession.progress,
+        OptimizationSession.current_position,
+        OptimizationSession.total_segments,
+        OptimizationSession.current_stage,
+        OptimizationSession.error_message
+    ).filter(
         OptimizationSession.session_id == session_id,
         OptimizationSession.user_id == user.id
     ).first()

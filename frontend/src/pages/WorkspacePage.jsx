@@ -14,29 +14,32 @@ const WorkspacePage = () => {
   const [queueStatus, setQueueStatus] = useState(null);
   const [activeSession, setActiveSession] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     loadSessions();
     loadQueueStatus();
     
-    // 每5秒更新队列状态
-    const interval = setInterval(loadQueueStatus, 5000);
+    // 降低队列状态更新频率到10秒，减少服务器负载
+    const interval = setInterval(loadQueueStatus, 10000);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    // 如果有活跃会话,每2秒更新进度
+    // 如果有活跃会话,每3秒更新进度（从2秒增加到3秒，减少请求频率）
     if (activeSession) {
       const interval = setInterval(() => {
         updateSessionProgress(activeSession);
-      }, 2000);
+      }, 3000);
       return () => clearInterval(interval);
     }
   }, [activeSession]);
 
   const loadSessions = async () => {
     try {
+      setIsLoadingSessions(true);
       const response = await optimizationAPI.listSessions();
       setSessions(response.data);
       
@@ -49,6 +52,8 @@ const WorkspacePage = () => {
       }
     } catch (error) {
       console.error('加载会话失败:', error);
+    } finally {
+      setIsLoadingSessions(false);
     }
   };
 
@@ -97,7 +102,12 @@ const WorkspacePage = () => {
       return;
     }
 
+    if (isSubmitting) {
+      return;
+    }
+
     try {
+      setIsSubmitting(true);
       const response = await optimizationAPI.startOptimization({
         original_text: text,
         processing_mode: processingMode,
@@ -109,6 +119,8 @@ const WorkspacePage = () => {
       loadSessions();
     } catch (error) {
       toast.error('启动优化失败: ' + error.response?.data?.detail);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -321,11 +333,20 @@ const WorkspacePage = () => {
                 
                 <button
                   onClick={handleStartOptimization}
-                  disabled={!text.trim() || activeSession}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+                  disabled={!text.trim() || activeSession || isSubmitting}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-6 rounded-lg transition-colors"
                 >
-                  <Play className="w-5 h-5" />
-                  开始优化
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      提交中...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-5 h-5" />
+                      开始优化
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -395,7 +416,11 @@ const WorkspacePage = () => {
               </div>
               
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {sessions.length === 0 ? (
+                {isLoadingSessions ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : sessions.length === 0 ? (
                   <p className="text-gray-500 text-sm text-center py-8">
                     暂无会话记录
                   </p>

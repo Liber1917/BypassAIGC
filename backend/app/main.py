@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 import os
 import sys
 from datetime import datetime, timedelta
@@ -73,6 +74,9 @@ app = FastAPI(
 
 # 绑定速率限制器到应用
 app.state.rate_limiter = rate_limiter
+
+# 添加 Gzip 压缩中间件以减少响应体积
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # CORS 配置
 app.add_middleware(
