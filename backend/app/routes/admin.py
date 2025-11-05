@@ -263,6 +263,8 @@ async def get_statistics(_: str = Depends(get_admin_from_token), db: Session = D
     total_sessions = db.query(OptimizationSession).count() or 0
     completed_sessions = db.query(OptimizationSession).filter(OptimizationSession.status == "completed").count() or 0
     processing_sessions = db.query(OptimizationSession).filter(OptimizationSession.status == "processing").count() or 0
+    queued_sessions = db.query(OptimizationSession).filter(OptimizationSession.status == "queued").count() or 0
+    failed_sessions = db.query(OptimizationSession).filter(OptimizationSession.status == "failed").count() or 0
 
     total_segments = db.query(OptimizationSegment).count() or 0
     completed_segments = db.query(OptimizationSegment).filter(OptimizationSegment.status == "completed").count() or 0
@@ -273,6 +275,42 @@ async def get_statistics(_: str = Depends(get_admin_from_token), db: Session = D
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     today_new_users = db.query(User).filter(User.created_at >= today_start).count() or 0
     today_active_users = db.query(User).filter(User.last_used >= today_start).count() or 0
+    today_sessions = db.query(OptimizationSession).filter(OptimizationSession.created_at >= today_start).count() or 0
+    
+    # 统计文本处理字数
+    all_sessions = db.query(OptimizationSession).filter(
+        OptimizationSession.status == "completed"
+    ).all()
+    
+    total_original_chars = sum(len(s.original_text) for s in all_sessions if s.original_text)
+    
+    # 统计各处理模式的使用量
+    paper_polish_count = db.query(OptimizationSession).filter(
+        OptimizationSession.processing_mode == "paper_polish"
+    ).count() or 0
+    
+    paper_polish_enhance_count = db.query(OptimizationSession).filter(
+        OptimizationSession.processing_mode == "paper_polish_enhance"
+    ).count() or 0
+    
+    emotion_polish_count = db.query(OptimizationSession).filter(
+        OptimizationSession.processing_mode == "emotion_polish"
+    ).count() or 0
+    
+    # 统计平均处理时间
+    completed_with_time = db.query(OptimizationSession).filter(
+        OptimizationSession.status == "completed",
+        OptimizationSession.completed_at.isnot(None),
+        OptimizationSession.created_at.isnot(None)
+    ).all()
+    
+    avg_processing_time = 0
+    if completed_with_time:
+        total_time = sum(
+            (s.completed_at - s.created_at).total_seconds() 
+            for s in completed_with_time
+        )
+        avg_processing_time = total_time / len(completed_with_time)
 
     return {
         "users": {
@@ -289,12 +327,21 @@ async def get_statistics(_: str = Depends(get_admin_from_token), db: Session = D
             "total": total_sessions,
             "completed": completed_sessions,
             "processing": processing_sessions,
-            "failed": total_sessions - completed_sessions - processing_sessions,
+            "queued": queued_sessions,
+            "failed": failed_sessions,
+            "today": today_sessions,
         },
         "segments": {
             "total": total_segments,
             "completed": completed_segments,
             "pending": total_segments - completed_segments,
+        },
+        "processing": {
+            "total_chars_processed": total_original_chars,
+            "avg_processing_time": round(avg_processing_time, 2),
+            "paper_polish_count": paper_polish_count,
+            "paper_polish_enhance_count": paper_polish_enhance_count,
+            "emotion_polish_count": emotion_polish_count,
         },
     }
 
@@ -395,6 +442,189 @@ async def generate_keys(
     return results
 
 
+@router.get("/sessions")
+async def get_all_sessions(
+    _: str = Depends(get_admin_from_token),
+    db: Session = Depends(get_db),
+    limit: int = 100,
+    status: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """获取所有会话历史"""
+    query = db.query(OptimizationSession).order_by(OptimizationSession.created_at.desc())
+    
+    if status:
+        query = query.filter(OptimizationSession.status == status)
+    
+    sessions = query.limit(limit).all()
+    
+    result = []
+    for session in sessions:
+        user = db.query(User).filter(User.id == session.user_id).first()
+        
+        # 计算处理时间
+        processing_time = None
+        if session.completed_at and session.created_at:
+            processing_time = (session.completed_at - session.created_at).total_seconds()
+        elif session.status == 'processing' and session.created_at:
+            processing_time = (datetime.utcnow() - session.created_at).total_seconds()
+        
+        # 统计段落
+        segments = db.query(OptimizationSegment).filter(
+            OptimizationSegment.session_id == session.id
+        ).all()
+        completed_segments = sum(1 for s in segments if s.status == 'completed')
+        
+        # 计算润色后和增强后的字符数
+        polished_char_count = 0
+        enhanced_char_count = 0
+        for seg in segments:
+            if seg.polished_text:
+                polished_char_count += len(seg.polished_text)
+            if seg.enhanced_text:
+                enhanced_char_count += len(seg.enhanced_text)
+        
+        result.append({
+            "session_id": session.id,
+            "user_id": session.user_id,
+            "card_key": user.card_key if user else None,
+            "status": session.status,
+            "processing_mode": session.processing_mode,
+            "original_char_count": len(session.original_text) if session.original_text else 0,
+            "polished_char_count": polished_char_count,
+            "enhanced_char_count": enhanced_char_count,
+            "total_segments": len(segments),
+            "completed_segments": completed_segments,
+            "progress": round((completed_segments / len(segments) * 100) if segments else 0, 1),
+            "created_at": session.created_at.isoformat() if session.created_at else None,
+            "completed_at": session.completed_at.isoformat() if session.completed_at else None,
+            "processing_time": processing_time,
+            "error_message": session.error_message,
+        })
+    
+    return result
+
+
+@router.get("/sessions/active")
+async def get_active_sessions(
+    _: str = Depends(get_admin_from_token),
+    db: Session = Depends(get_db)
+) -> List[Dict[str, Any]]:
+    """获取所有活跃会话（处理中和排队中）"""
+    active_sessions = db.query(OptimizationSession).filter(
+        OptimizationSession.status.in_(["processing", "queued"])
+    ).order_by(OptimizationSession.created_at.desc()).all()
+    
+    result = []
+    for session in active_sessions:
+        # 获取用户信息
+        user = db.query(User).filter(User.id == session.user_id).first()
+        
+        # 计算已处理段落数
+        completed_segments = db.query(OptimizationSegment).filter(
+            OptimizationSegment.session_id == session.id,
+            OptimizationSegment.status == "completed"
+        ).count()
+        
+        # 计算处理时间
+        processing_time = None
+        if session.status == "processing" and session.created_at:
+            processing_time = (datetime.utcnow() - session.created_at).total_seconds()
+        
+        # 统计文本字数
+        original_char_count = len(session.original_text) if session.original_text else 0
+        
+        result.append({
+            "id": session.id,
+            "session_id": session.session_id,
+            "user_id": session.user_id,
+            "card_key": user.card_key if user else "未知",
+            "status": session.status,
+            "progress": session.progress,
+            "current_stage": session.current_stage,
+            "current_position": session.current_position,
+            "total_segments": session.total_segments,
+            "processed_segments": completed_segments,
+            "original_text": session.original_text[:200] if session.original_text else "",
+            "original_char_count": original_char_count,
+            "processing_mode": session.processing_mode,
+            "created_at": session.created_at.isoformat() if session.created_at else None,
+            "processing_time": processing_time,
+            "error_message": session.error_message
+        })
+    
+    return result
+
+
+@router.get("/users/{user_id}/sessions")
+async def get_user_sessions(
+    user_id: int,
+    _: str = Depends(get_admin_from_token),
+    db: Session = Depends(get_db)
+) -> List[Dict[str, Any]]:
+    """获取指定用户的所有会话历史"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    
+    sessions = db.query(OptimizationSession).filter(
+        OptimizationSession.user_id == user_id
+    ).order_by(OptimizationSession.created_at.desc()).limit(50).all()
+    
+    result = []
+    for session in sessions:
+        # 统计段落信息
+        total_segments = db.query(OptimizationSegment).filter(
+            OptimizationSegment.session_id == session.id
+        ).count()
+        
+        completed_segments = db.query(OptimizationSegment).filter(
+            OptimizationSegment.session_id == session.id,
+            OptimizationSegment.status == "completed"
+        ).count()
+        
+        # 统计字数
+        original_char_count = len(session.original_text) if session.original_text else 0
+        
+        # 统计处理后的字数
+        segments = db.query(OptimizationSegment).filter(
+            OptimizationSegment.session_id == session.id
+        ).all()
+        
+        polished_char_count = sum(
+            len(seg.polished_text) for seg in segments if seg.polished_text
+        )
+        enhanced_char_count = sum(
+            len(seg.enhanced_text) for seg in segments if seg.enhanced_text
+        )
+        
+        # 计算处理时间
+        processing_time = None
+        if session.completed_at and session.created_at:
+            processing_time = (session.completed_at - session.created_at).total_seconds()
+        elif session.status == "processing" and session.created_at:
+            processing_time = (datetime.utcnow() - session.created_at).total_seconds()
+        
+        result.append({
+            "id": session.id,
+            "session_id": session.session_id,
+            "status": session.status,
+            "processing_mode": session.processing_mode,
+            "original_text": session.original_text[:100] if session.original_text else "",
+            "original_char_count": original_char_count,
+            "polished_char_count": polished_char_count,
+            "enhanced_char_count": enhanced_char_count,
+            "total_segments": total_segments,
+            "completed_segments": completed_segments,
+            "progress": session.progress,
+            "created_at": session.created_at.isoformat() if session.created_at else None,
+            "completed_at": session.completed_at.isoformat() if session.completed_at else None,
+            "processing_time": processing_time,
+            "error_message": session.error_message
+        })
+    
+    return result
+
+
 @router.get("/config")
 async def get_config(_: str = Depends(get_admin_from_token)) -> Dict[str, Any]:
     return {
@@ -407,6 +637,11 @@ async def get_config(_: str = Depends(get_admin_from_token)) -> Dict[str, Any]:
             "model": settings.ENHANCE_MODEL,
             "api_key": settings.ENHANCE_API_KEY or "",
             "base_url": settings.ENHANCE_BASE_URL or "",
+        },
+        "emotion": {
+            "model": getattr(settings, 'EMOTION_MODEL', settings.POLISH_MODEL),
+            "api_key": getattr(settings, 'EMOTION_API_KEY', settings.POLISH_API_KEY) or "",
+            "base_url": getattr(settings, 'EMOTION_BASE_URL', settings.POLISH_BASE_URL) or "",
         },
         "compression": {
             "model": settings.COMPRESSION_MODEL,
