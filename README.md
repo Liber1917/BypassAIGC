@@ -55,8 +55,11 @@ chmod +x setup.sh start-backend.sh start-frontend.sh start-all.sh stop-all.sh ve
 ```
 
 ### 2. 配置文件
-#### 考虑到可能存在非法利用的问题（比如一些营销号恶意使用），微调的提示词不公开。自行修改优化Prompt,本项目内置的Prompt只提供简单的例子。
 
+```
+出于防止不当使用（如被营销号滥用）的考虑，本项目不公开微调所用 Prompt。请根据实际需求自行调整与优化；仓库内仅内置简单示例。若文本润色效果不理想，请在 \BypassAIGC\backend\app\services\ai_service.py 中替换或微调对应的 Prompt。
+
+```
 编辑 `backend/.env`:
 ```properties
 # 数据库配置
@@ -258,6 +261,7 @@ A: 检查 API Key 和 Base URL 配置是否正确
 未经允许禁止商业使用
 
 Creative Commons (CC BY-NC-SA 4.0)
+
 
 
 
