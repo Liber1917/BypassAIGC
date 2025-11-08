@@ -15,7 +15,8 @@
 <img width="1958" height="662" alt="图片" src="https://github.com/user-attachments/assets/de871360-c045-46ec-8e96-7b3c100af147" />
 修改优化后
 <img width="1772" height="665" alt="图片" src="https://github.com/user-attachments/assets/3fd2d052-d62e-41fd-8215-fbc375e0d0e5" />
-
+gptzero
+<img width="2224" height="547" alt="图片" src="https://github.com/user-attachments/assets/b5daf3cb-6e3f-401c-bdc2-a9a88dcbdb35" />
 
 ## 快速开始
 
@@ -260,6 +261,7 @@ A: 检查 API Key 和 Base URL 配置是否正确
 Creative Commons (CC BY-NC-SA 4.0)
 
 [![Star History Chart](https://api.star-history.com/svg?repos=chi111i/BypassAIGC&type=Date)](https://star-history.com/#chi111i/BypassAIGC)
+
 
 
 
