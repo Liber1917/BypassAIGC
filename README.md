@@ -101,17 +101,17 @@ OPENAI_BASE_URL=http://IP:PORT/v1
 # 第一阶段模型配置 (论文润色) - 推荐使用 gemini-2.5-pro
 POLISH_MODEL=gemini-2.5-pro
 POLISH_API_KEY=KEY
-POLISH_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+POLISH_BASE_URL=http://IP:PORT/v1
 
 # 第二阶段模型配置 (原创性增强) - 推荐使用 gemini-2.5-pro
 ENHANCE_MODEL=gemini-2.5-pro
 ENHANCE_API_KEY=KEY
-ENHANCE_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+ENHANCE_BASE_URL=http://IP:PORT/v1
 
 # 感情文章润色模型配置 - 推荐使用 gemini-2.5-pro
 EMOTION_MODEL=gemini-2.5-pro
 EMOTION_API_KEY=KEY
-EMOTION_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+EMOTION_BASE_URL=http://IP:PORT/v1
 
 # 并发配置
 MAX_CONCURRENT_USERS=7
@@ -120,7 +120,7 @@ MAX_CONCURRENT_USERS=7
 HISTORY_COMPRESSION_THRESHOLD=2000
 COMPRESSION_MODEL=gemini-2.5-pro
 COMPRESSION_API_KEY=KEY
-COMPRESSION_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+COMPRESSION_BASE_URL=http://IP:PORT/v1
 
 # JWT 密钥
 SECRET_KEY=JWT-key
@@ -135,7 +135,9 @@ SEGMENT_SKIP_THRESHOLD=15
 
 ```
 
-**注意:** 推荐使用 Google Gemini 2.5 Pro 模型以获得更好的性能和成本效益。
+**注意:** 
+- 推荐使用 Google Gemini 2.5 Pro 模型以获得更好的性能和成本效益
+- BASE_URL 使用 OpenAI 兼容格式，需要配置支持 OpenAI API 格式的代理服务
 
 ### 3. 启动服务
 

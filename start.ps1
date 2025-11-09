@@ -160,22 +160,22 @@ REDIS_URL=redis://localhost:6379/0
 
 # OpenAI API 配置
 OPENAI_API_KEY=your-api-key-here
-OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_BASE_URL=http://IP:PORT/v1
 
 # 第一阶段模型配置 (论文润色) - 推荐使用 gemini-2.5-pro
 POLISH_MODEL=gemini-2.5-pro
 POLISH_API_KEY=your-api-key-here
-POLISH_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+POLISH_BASE_URL=http://IP:PORT/v1
 
 # 第二阶段模型配置 (原创性增强) - 推荐使用 gemini-2.5-pro
 ENHANCE_MODEL=gemini-2.5-pro
 ENHANCE_API_KEY=your-api-key-here
-ENHANCE_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+ENHANCE_BASE_URL=http://IP:PORT/v1
 
 # 感情文章润色模型配置 - 推荐使用 gemini-2.5-pro
 EMOTION_MODEL=gemini-2.5-pro
 EMOTION_API_KEY=your-api-key-here
-EMOTION_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+EMOTION_BASE_URL=http://IP:PORT/v1
 
 # 并发配置
 MAX_CONCURRENT_USERS=5
@@ -184,7 +184,7 @@ MAX_CONCURRENT_USERS=5
 HISTORY_COMPRESSION_THRESHOLD=2000
 COMPRESSION_MODEL=gemini-2.5-pro
 COMPRESSION_API_KEY=your-api-key-here
-COMPRESSION_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+COMPRESSION_BASE_URL=http://IP:PORT/v1
 
 # JWT 密钥（请修改为随机字符串）
 SECRET_KEY=your-secret-key-change-this-in-production
