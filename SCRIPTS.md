@@ -4,11 +4,69 @@
 
 ## 📋 目录
 
-- [安装脚本](#安装脚本)
-- [启动脚本](#启动脚本)
-- [验证脚本](#验证脚本)
-- [维护脚本](#维护脚本)
+- [统一启动脚本（推荐）](#统一启动脚本推荐)
+- [传统独立脚本](#传统独立脚本)
+  - [安装脚本](#安装脚本)
+  - [启动脚本](#启动脚本)
+  - [验证脚本](#验证脚本)
+  - [维护脚本](#维护脚本)
 - [平台特定脚本](#平台特定脚本)
+
+---
+
+## 统一启动脚本（推荐）
+
+### `start.ps1` (Windows)
+### `start.sh` (Linux/Ubuntu)
+### `start-macos.sh` (macOS)
+
+**用途**: 统一的交互式管理脚本，整合了所有常用功能
+
+**功能菜单**:
+1. **环境安装配置** - 一键安装和配置所有依赖
+2. **启动所有服务** - 同时启动前端和后端服务
+3. **仅启动后端服务** - 启动 FastAPI 后端（端口 8000）
+4. **仅启动前端服务** - 启动 React 前端（端口 3000）
+5. **停止所有服务** - 停止所有正在运行的服务
+6. **验证安装** - 检查环境配置和依赖安装情况
+7. **验证数据库** - 检查数据库配置和连接状态
+8. **故障排查** - 生成诊断报告（Linux/macOS）
+9. **清理环境** - 清理临时文件或重置环境（Linux/macOS）
+0. **退出**
+
+**特性**:
+- **Windows 版本**: 自动检测并优先使用 PowerShell 7+ (pwsh.exe) 以避免 PowerShell 5.1 兼容性问题
+- **Linux/macOS 版本**: 自动检测 tmux/screen 实现后台运行
+- **交互式菜单**: 友好的用户界面，提供详细的选项说明
+- **智能检测**: 自动检查依赖和环境状态
+- **命令行模式**: 支持直接传入选项编号，如 `./start.sh 2` 直接启动所有服务
+
+**使用示例**:
+
+```bash
+# macOS
+./start-macos.sh        # 交互式菜单
+./start-macos.sh 1      # 直接执行环境配置
+./start-macos.sh 2      # 直接启动所有服务
+
+# Linux/Ubuntu  
+./start.sh              # 交互式菜单
+./start.sh 2            # 直接启动所有服务
+
+# Windows
+.\start.ps1             # 交互式菜单
+.\start.ps1 -Option 2   # 直接启动所有服务
+```
+
+**推荐模型配置**: 
+- 所有新生成的配置文件默认使用 `gemini-2.5-pro` 模型
+- 推荐使用 Google Gemini 以获得更好的性能和成本效益
+
+---
+
+## 传统独立脚本
+
+以下脚本仍然可用，适合需要单独功能或脚本化操作的场景。
 
 ---
 
@@ -382,49 +440,51 @@ python init_db.py
 
 ## 📖 使用流程
 
-### 首次安装
+### 首次安装（推荐使用统一脚本）
+
 ```bash
-# 1. 选择对应平台的安装脚本
-./setup.sh              # Linux/Ubuntu
-./setup-macos.sh        # macOS
-.\setup.ps1             # Windows
+# macOS
+./start-macos.sh
+# 选择选项 1 进行环境配置
 
-# 2. 配置 API 密钥
-nano backend/.env       # Linux/macOS
-notepad backend\.env    # Windows
+# Linux/Ubuntu
+./start.sh
+# 选择选项 1 进行环境配置
 
-# 3. 验证安装（可选）
-./verify-installation.sh     # Linux/macOS
-.\verify-installation.ps1    # Windows
+# Windows
+.\start.ps1
+# 选择选项 1 进行环境配置
 ```
 
-### 日常使用
-```bash
-# 启动服务
-./start-all.sh          # Linux/Ubuntu
-./start-all-macos.sh    # macOS
-.\start-all.ps1         # Windows
+配置完成后，编辑 `backend/.env` 填入 API 密钥（推荐使用 gemini-2.5-pro）。
 
-# 停止服务
-./stop-all.sh           # Linux/macOS
-# Windows: 直接关闭窗口或 Ctrl+C
+### 日常使用
+
+```bash
+# 启动服务 - 使用统一脚本
+./start-macos.sh  # 或 ./start.sh (Linux) 或 .\start.ps1 (Windows)
+# 选择选项 2 启动所有服务
+# 选择选项 5 停止所有服务
+
+# 或使用传统脚本
+./start-all-macos.sh   # macOS
+./start-all.sh         # Linux/Ubuntu
+.\start-all.ps1        # Windows (注意：可能有 PowerShell 5.1 兼容性问题)
 ```
 
 ### 故障排查
+
 ```bash
-# 1. 运行诊断
-./troubleshoot.sh
+# 使用统一脚本
+./start.sh
+# 选择选项 8 进行故障排查
+# 选择选项 6 验证安装
+# 选择选项 7 验证数据库
 
-# 2. 查看日志
-tail -f backend/backend.log
-tail -f frontend/frontend.log
-
-# 3. 验证数据库
+# 或使用传统脚本
+./troubleshoot.sh      # 生成诊断报告
+./verify-installation.sh
 ./verify-database.sh
-
-# 4. 如果需要，清理并重装
-./cleanup.sh            # 选择清理选项
-./setup.sh              # 重新安装
 ```
 
 ### 维护和更新
@@ -471,12 +531,14 @@ Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ## 💡 提示
 
-1. **首次使用**: 始终从安装脚本开始（setup.sh / setup-macos.sh / setup.ps1）
-2. **验证安装**: 使用 verify-installation 脚本确保一切正常
-3. **后台运行**: Linux/macOS 推荐安装 tmux 以便更好地管理服务
-4. **故障排查**: 遇到问题先运行 troubleshoot.sh 获取诊断信息
-5. **定期清理**: 使用 cleanup 脚本清理临时文件和缓存
+1. **首次使用**: 推荐使用统一脚本（start.ps1 / start.sh / start-macos.sh），选择菜单选项 1 进行环境配置
+2. **Windows 用户**: 统一脚本会自动检测并优先使用 PowerShell 7+ 以避免兼容性问题
+3. **验证安装**: 使用统一脚本的选项 6 确保一切正常
+4. **后台运行**: Linux/macOS 推荐安装 tmux 以便更好地管理服务
+5. **故障排查**: 遇到问题使用统一脚本的选项 8 获取诊断信息
+6. **定期清理**: 使用统一脚本的选项 9 清理临时文件和缓存
+7. **模型推荐**: 新配置文件默认使用 gemini-2.5-pro 模型，性能更优且成本更低
 
 ---
 
-**最后更新**: 2024-11-05
+**最后更新**: 2025-01-09

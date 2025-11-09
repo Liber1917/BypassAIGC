@@ -20,45 +20,72 @@ gptzero
 
 ## 快速开始
 
-### 1. 首次安装
+### 1. 使用统一启动脚本（推荐）
+
+所有系统现已整合为统一的交互式脚本，通过菜单选择所需功能：
 
 **macOS 系统:**
 ```bash
 # 添加执行权限
+chmod +x start-macos.sh
+
+# 运行统一脚本
+./start-macos.sh
+```
+
+**Windows 系统:**
+```powershell
+# 运行统一脚本（自动检测 PowerShell 7+ 以避免兼容性问题）
+.\start.ps1
+```
+
+**Ubuntu/Linux 系统:**
+```bash
+# 添加执行权限
+chmod +x start.sh
+
+# 运行统一脚本
+./start.sh
+```
+
+**菜单功能包括:**
+- 1. 环境安装配置
+- 2. 启动所有服务
+- 3. 仅启动后端服务
+- 4. 仅启动前端服务
+- 5. 停止所有服务
+- 6. 验证安装
+- 7. 验证数据库
+- 8. 故障排查（Linux/macOS）
+- 9. 清理环境（Linux/macOS）
+
+### 1.1 传统方式（仍然可用）
+
+如果你更喜欢使用独立脚本：
+
+**macOS 系统:**
+```bash
 chmod +x setup-macos.sh start-all-macos.sh
-
-# 一键配置环境（自动安装 Homebrew 和依赖）
 ./setup-macos.sh
-
-# 验证安装（可选）
 ./verify-installation.sh
 ```
 
 **Windows 系统:**
 ```powershell
-# 一键配置环境
 .\setup.ps1
-
-# 验证安装（可选）
 .\verify-installation.ps1
 ```
 
 **Ubuntu/Linux 系统:**
 ```bash
-# 添加执行权限（首次需要）
-chmod +x setup.sh start-backend.sh start-frontend.sh start-all.sh stop-all.sh verify-installation.sh verify-database.sh
-
-# 一键配置环境
+chmod +x setup.sh start-all.sh verify-installation.sh
 ./setup.sh
-
-# 验证安装（可选）
 ./verify-installation.sh
 ```
 
 ### 2. 配置文件
 
-
-编辑 `backend/.env`:
+编辑 `backend/.env`（统一脚本会自动生成模板）:
 ```properties
 # 数据库配置
 DATABASE_URL=sqlite:///./ai_polish.db
@@ -71,25 +98,29 @@ REDIS_URL=redis://IP:6379/0
 OPENAI_API_KEY=KEY
 OPENAI_BASE_URL=http://IP:PORT/v1
 
-# 第一阶段模型配置 (论文润色)
-POLISH_MODEL=GPT-5
+# 第一阶段模型配置 (论文润色) - 推荐使用 gemini-2.5-pro
+POLISH_MODEL=gemini-2.5-pro
 POLISH_API_KEY=KEY
-POLISH_BASE_URL=http://IP:PORT/v1
+POLISH_BASE_URL=https://generativelanguage.googleapis.com/v1beta
 
-# 第二阶段模型配置 (原创性增强)
-ENHANCE_MODEL=GPT-5
+# 第二阶段模型配置 (原创性增强) - 推荐使用 gemini-2.5-pro
+ENHANCE_MODEL=gemini-2.5-pro
 ENHANCE_API_KEY=KEY
-ENHANCE_BASE_URL=http://IP:PORT/v1
-# 感情文章润色模型配置
-EMOTION_MODEL = GPT-5
-EMOTION_API_KEY = KEY
-EMOTION_BASE_URL = http://IP:PORT/v1
+ENHANCE_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+
+# 感情文章润色模型配置 - 推荐使用 gemini-2.5-pro
+EMOTION_MODEL=gemini-2.5-pro
+EMOTION_API_KEY=KEY
+EMOTION_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+
 # 并发配置
 MAX_CONCURRENT_USERS=7
 
 # 会话压缩配置
 HISTORY_COMPRESSION_THRESHOLD=2000
-COMPRESSION_MODEL=GPT-5
+COMPRESSION_MODEL=gemini-2.5-pro
+COMPRESSION_API_KEY=KEY
+COMPRESSION_BASE_URL=https://generativelanguage.googleapis.com/v1beta
 
 # JWT 密钥
 SECRET_KEY=JWT-key
@@ -101,33 +132,47 @@ ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
 DEFAULT_USAGE_LIMIT=1
 SEGMENT_SKIP_THRESHOLD=15
-COMPRESSION_API_KEY=KEY
-COMPRESSION_BASE_URL=http://IP:PORT/v1
 
 ```
+
+**注意:** 推荐使用 Google Gemini 2.5 Pro 模型以获得更好的性能和成本效益。
 
 ### 3. 启动服务
 
 **数据库说明**: 数据库会在首次启动后端服务时自动创建，无需手动初始化。
 
+**推荐方式 - 使用统一脚本:**
+
+所有系统都可使用统一脚本的菜单选项 2 来启动所有服务：
+
+```bash
+# macOS/Linux
+./start-macos.sh  # 或 ./start.sh
+# 然后选择选项 2
+
+# Windows（自动检测并使用 PowerShell 7+ 避免兼容性问题）
+.\start.ps1
+# 然后选择选项 2
+```
+
+**传统方式（仍然可用）:**
+
 **macOS 系统:**
 ```bash
-# 一键启动（推荐，使用 tmux）
+# 一键启动（使用 tmux）
 ./start-all-macos.sh
 
-# 或分别启动（需要两个终端）
+# 或分别启动
 ./start-backend.sh   # 后端 http://localhost:8000
 ./start-frontend.sh  # 前端 http://localhost:3000
 
 # 停止所有服务
 ./stop-all.sh
-
-# 配置开机自启，详见 DEPLOY.md（launchd 配置）
 ```
 
 **Windows 系统:**
 ```powershell
-# 一键启动（推荐）
+# 一键启动（注意：推荐使用统一脚本以自动选择 PowerShell 7+）
 .\start-all.ps1
 
 # 或分别启动
@@ -137,17 +182,15 @@ COMPRESSION_BASE_URL=http://IP:PORT/v1
 
 **Ubuntu/Linux 系统:**
 ```bash
-# 一键启动（推荐）
-./start-all.sh       # 使用 tmux/screen 后台运行
+# 一键启动（使用 tmux/screen 后台运行）
+./start-all.sh
 
-# 或分别启动（需要两个终端）
+# 或分别启动
 ./start-backend.sh   # 后端 http://localhost:8000
 ./start-frontend.sh  # 前端 http://localhost:3000
 
 # 停止所有服务
 ./stop-all.sh
-
-# 或配置 systemd 服务实现开机自启，详见 DEPLOY.md
 ```
 
 ## 功能特性
