@@ -20,7 +20,7 @@ gptzero
 
 ## 快速开始
 
-### 1. 使用统一启动脚本（推荐）
+### 1. 使用统一启动脚本
 
 所有系统现已整合为统一的交互式脚本，通过菜单选择所需功能：
 
@@ -59,33 +59,11 @@ chmod +x start.sh
 - 8. 故障排查（Linux/macOS）
 - 9. 清理环境（Linux/macOS）
 
-### 1.1 传统方式（仍然可用）
-
-如果你更喜欢使用独立脚本：
-
-**macOS 系统:**
-```bash
-chmod +x setup-macos.sh start-all-macos.sh
-./setup-macos.sh
-./verify-installation.sh
-```
-
-**Windows 系统:**
-```powershell
-.\setup.ps1
-.\verify-installation.ps1
-```
-
-**Ubuntu/Linux 系统:**
-```bash
-chmod +x setup.sh start-all.sh verify-installation.sh
-./setup.sh
-./verify-installation.sh
-```
-
 ### 2. 配置文件
 
-编辑 `backend/.env`（统一脚本会自动生成模板）:
+首次运行统一脚本并选择"环境安装配置"后，会自动生成 `backend/.env` 配置文件模板。
+
+编辑 `backend/.env` 填入你的配置信息:
 ```properties
 # 数据库配置
 DATABASE_URL=sqlite:///./ai_polish.db
@@ -143,7 +121,7 @@ SEGMENT_SKIP_THRESHOLD=15
 
 **数据库说明**: 数据库会在首次启动后端服务时自动创建，无需手动初始化。
 
-**推荐方式 - 使用统一脚本:**
+**使用统一脚本启动:**
 
 所有系统都可使用统一脚本的菜单选项 2 来启动所有服务：
 
@@ -155,44 +133,6 @@ SEGMENT_SKIP_THRESHOLD=15
 # Windows（自动检测并使用 PowerShell 7+ 避免兼容性问题）
 .\start.ps1
 # 然后选择选项 2
-```
-
-**传统方式（仍然可用）:**
-
-**macOS 系统:**
-```bash
-# 一键启动（使用 tmux）
-./start-all-macos.sh
-
-# 或分别启动
-./start-backend.sh   # 后端 http://localhost:8000
-./start-frontend.sh  # 前端 http://localhost:3000
-
-# 停止所有服务
-./stop-all.sh
-```
-
-**Windows 系统:**
-```powershell
-# 一键启动（注意：推荐使用统一脚本以自动选择 PowerShell 7+）
-.\start-all.ps1
-
-# 或分别启动
-.\start-backend.ps1  # 后端 http://localhost:8000
-.\start-frontend.ps1 # 前端 http://localhost:3000
-```
-
-**Ubuntu/Linux 系统:**
-```bash
-# 一键启动（使用 tmux/screen 后台运行）
-./start-all.sh
-
-# 或分别启动
-./start-backend.sh   # 后端 http://localhost:8000
-./start-frontend.sh  # 前端 http://localhost:3000
-
-# 停止所有服务
-./stop-all.sh
 ```
 
 ## 功能特性
@@ -254,17 +194,23 @@ AI_GC/
 
 ### 验证安装
 
-使用验证脚本检查环境配置：
+使用统一脚本菜单选项 6 检查环境配置：
 
 ```bash
 # Linux/Ubuntu
-./verify-installation.sh
+./start.sh
+# 选择选项 6
+
+# macOS
+./start-macos.sh
+# 选择选项 6
 
 # Windows
-.\verify-installation.ps1
+.\start.ps1
+# 选择选项 6
 ```
 
-验证脚本会检查：
+验证功能会检查：
 - Python 和 Node.js 版本
 - 依赖包安装情况
 - 配置文件完整性
@@ -273,29 +219,35 @@ AI_GC/
 
 ### 验证数据库
 
-单独验证数据库配置：
+使用统一脚本菜单选项 7 单独验证数据库配置：
 
 ```bash
 # Linux/Ubuntu
-./verify-database.sh
+./start.sh
+# 选择选项 7
+
+# macOS
+./start-macos.sh
+# 选择选项 7
 
 # Windows
-.\verify-database.ps1
+.\start.ps1
+# 选择选项 7
 ```
 
 ## 常见问题
 
 **Q: 端口被占用？**  
-A: 使用 `./stop-all.sh` (Linux) 或修改启动脚本中的端口号
+A: 使用统一脚本的菜单选项 5 停止所有服务，或修改启动脚本中的端口号
 
 **Q: 配置修改后未生效？**  
-A: 检查后端日志，配置应自动重载。如仍无效请重启后端
+A: 检查后端日志，配置应自动重载。如仍无效请使用统一脚本重启后端
 
 **Q: 登录失败？**  
 A: 检查 `.env` 中的 `ADMIN_USERNAME` 和 `ADMIN_PASSWORD`
 
 **Q: 数据库初始化失败？**  
-A: 运行 `./verify-database.sh` 查看详细错误信息
+A: 使用统一脚本的菜单选项 7 查看详细错误信息
 
 **Q: AI 调用失败？**  
 A: 检查 API Key 和 Base URL 配置是否正确
