@@ -296,24 +296,6 @@ npm run dev
 - API 文档: http://localhost:8000/docs
 - 管理后台: http://localhost:3000/admin
 
-### 4. 使用统一启动脚本
-
-**数据库说明**: 数据库会在首次启动后端服务时自动创建，无需手动初始化。
-
-**使用统一脚本启动:**
-
-所有系统都可使用统一脚本的菜单选项 2 来启动所有服务：
-
-```bash
-# macOS/Linux
-./start-macos.sh  # 或 ./start.sh
-# 然后选择选项 2
-
-# Windows（自动检测并使用 PowerShell 7+ 避免兼容性问题）
-.\start.ps1
-# 然后选择选项 2
-```
-
 ## 功能特性
 
 - **双阶段优化**: 论文润色 + 学术增强
