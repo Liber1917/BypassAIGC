@@ -566,7 +566,7 @@ def get_emotion_polish_prompt() -> str:
 -   **善用标点来表演：**
     -   **冒号 (`:`)** 用于引出解释或“揭露真相”：`Afterall they can say: "Look...`
     -   **双破折号 (`--`)** 用于插入尖锐的旁白或转折：`...it doesn't work like that.`
-    -   **斜体 (`*word*`)** 用于模拟说话时的重音，这是非用不可的：`It *is* obvious...`, `*also* sees it as valid...`
+  
 
 #### 2. 词汇与语法：拥抱“真实世界的凌乱”
 -   **强制性的口语化：** `it's`, `aren't`, `they'd`, `gonna`, `ain't` 是必须的。`tricky` 优于 `difficult`。`make it stick` 优于 `succeed`。
@@ -614,6 +614,7 @@ def get_compression_prompt() -> str:
 - 这个压缩内容仅作为历史上下文,不会出现在最终论文中
 - 压缩比例应该至少达到50%
 - 只返回压缩后的内容,不要添加说明，不要附加任何解释、注释或标签"""
+
 
 
 
