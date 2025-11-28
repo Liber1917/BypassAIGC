@@ -43,7 +43,7 @@ class StreamManager:
         if not queues:
             # 只记录非 content 类型的消息，避免刷屏
             if data.get('type') != 'content':
-                print(f"[STREAM] No active connections for session {session_id}", flush=True)
+                print(f"[STREAM WARNING] No active connections for session {session_id}, message type: {data.get('type')}", flush=True)
             return
 
         message = f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
@@ -52,11 +52,24 @@ class StreamManager:
         if data.get('type') != 'content':
             print(f"[STREAM BROADCAST] Session: {session_id}, Type: {data.get('type')}, Connections: {len(queues)}", flush=True)
         
+        failed_queues = []
         for queue in queues:
             try:
-                await queue.put(message)
+                # 使用 put_nowait 避免阻塞
+                queue.put_nowait(message)
+            except asyncio.QueueFull:
+                print(f"[STREAM ERROR] Queue full for session {session_id}, dropping message", flush=True)
+                failed_queues.append(queue)
             except Exception as e:
                 print(f"[STREAM ERROR] Failed to push to queue: {e}", flush=True)
+                failed_queues.append(queue)
+        
+        # 清理失败的队列
+        if failed_queues:
+            async with self._lock:
+                for failed_queue in failed_queues:
+                    if session_id in self.connections and failed_queue in self.connections[session_id]:
+                        self.connections[session_id].remove(failed_queue)
 
 # 全局实例
 stream_manager = StreamManager()

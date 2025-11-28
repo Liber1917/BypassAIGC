@@ -414,8 +414,10 @@ async def retry_session(
     if session.status not in ["failed", "stopped"]:
         raise HTTPException(status_code=400, detail="仅可对失败或已停止的会话执行重试")
 
+    # 保留历史错误信息
+    old_error = session.error_message or "未知错误"
     session.status = "queued"
-    session.error_message = None
+    session.error_message = f"[重试中] 上次失败原因: {old_error}"
     db.commit()
 
     background_tasks.add_task(run_optimization, session.id, db)
