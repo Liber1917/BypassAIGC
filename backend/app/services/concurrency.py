@@ -12,10 +12,11 @@ class ConcurrencyManager:
         self.active_sessions: Dict[str, datetime] = {}
         self.queue: List[str] = []
         self._lock = asyncio.Lock()
+        self._condition = asyncio.Condition(self._lock)  # 添加条件变量
     
     async def acquire(self, session_id: str) -> bool:
         """获取执行权限"""
-        async with self._lock:
+        async with self._condition:
             # 如果已经在活跃会话中,直接返回
             if session_id in self.active_sessions:
                 return True
@@ -26,14 +27,22 @@ class ConcurrencyManager:
 
             if session_id not in self.queue:
                 self.queue.append(session_id)
-            return False
+            
+            # 等待被唤醒，而不是轮询
+            while session_id not in self.active_sessions and session_id in self.queue:
+                await self._condition.wait()
+            
+            return session_id in self.active_sessions
     
     async def release(self, session_id: str):
         """释放执行权限"""
-        async with self._lock:
+        async with self._condition:
             if session_id in self.active_sessions:
                 del self.active_sessions[session_id]
+            if session_id in self.queue:
+                self.queue.remove(session_id)
             self._activate_waiting_locked()
+            self._condition.notify_all()  # 唤醒所有等待者
     
     async def get_status(self, session_id: Optional[str] = None) -> Dict:
         """获取队列状态"""
@@ -67,9 +76,10 @@ class ConcurrencyManager:
 
     async def update_limit(self, new_limit: int):
         """更新并发限制"""
-        async with self._lock:
+        async with self._condition:
             self.max_concurrent = max(1, new_limit)
             self._activate_waiting_locked()
+            self._condition.notify_all()  # 唤醒所有等待者以检查新的限制
 
     def _activate_waiting_locked(self):
         """尝试为等待队列中的会话分配执行权限 (需持有锁)"""
