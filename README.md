@@ -1,8 +1,8 @@
 ## AI 学术写作助手
 
 专业论文润色与语言优化系统
-<img width="2178" height="1346" alt="图片" src="https://github.com/user-attachments/assets/98bd2aa2-93b7-405e-8edc-aaec76a19b1e" />
-<img width="2353" height="1230" alt="图片" src="https://github.com/user-attachments/assets/d9adc168-0cc4-4a8c-b958-3479d881dd4f" />
+<img width="2080" height="1361" alt="图片" src="https://github.com/user-attachments/assets/c11abdc9-4bc4-4d61-bea0-13071dba01cd" />
+
 <img width="2103" height="1337" alt="图片" src="https://github.com/user-attachments/assets/523da9c2-899d-4739-932e-84af881a1dfd" />
 
 
@@ -421,6 +421,7 @@ A: 检查 API Key 和 Base URL 配置是否正确
 Creative Commons (CC BY-NC-SA 4.0)
 
 [![Star History Chart](https://api.star-history.com/svg?repos=chi111i/BypassAIGC&type=Date)](https://star-history.com/#chi111i/BypassAIGC)
+
 
 
 
