@@ -41,15 +41,22 @@ class StreamManager:
                 queues = list(self.connections[session_id])
         
         if not queues:
+            # 只记录非 content 类型的消息，避免刷屏
+            if data.get('type') != 'content':
+                print(f"[STREAM] No active connections for session {session_id}", flush=True)
             return
 
         message = f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+        
+        # 只记录非 content 类型的消息，避免刷屏
+        if data.get('type') != 'content':
+            print(f"[STREAM BROADCAST] Session: {session_id}, Type: {data.get('type')}, Connections: {len(queues)}", flush=True)
         
         for queue in queues:
             try:
                 await queue.put(message)
             except Exception as e:
-                print(f"Error pushing to queue: {e}")
+                print(f"[STREAM ERROR] Failed to push to queue: {e}", flush=True)
 
 # 全局实例
 stream_manager = StreamManager()

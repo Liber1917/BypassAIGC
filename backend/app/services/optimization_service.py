@@ -155,6 +155,8 @@ class OptimizationService:
     
     async def _process_stage(self, stage: str):
         """处理单个阶段"""
+        print(f"\n[STAGE START] Stage: {stage}, Session: {self.session_obj.session_id}", flush=True)
+        
         self.session_obj.current_stage = stage
         await run_in_threadpool(self.db.commit)
         
@@ -177,12 +179,17 @@ class OptimizationService:
         
         segments = await run_in_threadpool(get_segments)
         
+        # 如果存在失败段落，跳过已完成的段落
+        start_index = 0
+        if self.session_obj.failed_segment_index is not None:
+            start_index = max(self.session_obj.failed_segment_index, 0)
+        
         # 历史会话 - 只包含AI的回复内容
+        # 只加载 start_index 之前的段落到历史，避免重试时历史与当前处理位置不一致
         history: List[Dict[str, str]] = []
         total_chars = 0
 
-        # 先加载已完成段落的AI回复到历史上下文
-        for segment in segments:
+        for segment in segments[:start_index]:
             if segment.is_title:
                 # 标题段落不参与历史上下文
                 continue
@@ -195,11 +202,8 @@ class OptimizationService:
             elif stage == "enhance" and segment.enhanced_text:
                 history.append({"role": "assistant", "content": segment.enhanced_text})
                 total_chars += count_chinese_characters(segment.enhanced_text)
-
-        # 如果存在失败段落，跳过已完成的段落
-        start_index = 0
-        if self.session_obj.failed_segment_index is not None:
-            start_index = max(self.session_obj.failed_segment_index, 0)
+        
+        print(f"[STAGE] Loaded {len(history)} history messages from segments[:start_index={start_index}]", flush=True)
         
         skip_threshold = max(settings.SEGMENT_SKIP_THRESHOLD, 0)
 
@@ -239,6 +243,9 @@ class OptimizationService:
                     await run_in_threadpool(self.db.commit)
                     continue
 
+                print(f"\n[SEGMENT {idx}] Processing segment {idx+1}/{len(segments)}, Stage: {stage}", flush=True)
+                print(f"[SEGMENT {idx}] Input Length: {count_text_length(segment.original_text)}", flush=True)
+                
                 segment.status = "processing"
                 segment.stage = stage
                 await run_in_threadpool(self.db.commit)
@@ -295,14 +302,27 @@ class OptimizationService:
                 
                 # 检查是否需要压缩历史 - 基于字符数阈值
                 if total_chars > settings.HISTORY_COMPRESSION_THRESHOLD:
+                    print(f"\n[HISTORY COMPRESS] Triggering compression, Stage: {stage}", flush=True)
+                    print(f"[HISTORY COMPRESS] Before: {total_chars} chars, {len(history)} messages", flush=True)
+                    
                     compressed_history = await self._compress_history(history, stage)
                     # 压缩后的历史替换原历史，用于后续处理
                     history = compressed_history
                     # 重新计算字符数
                     total_chars = sum(count_chinese_characters(msg.get("content", "")) for msg in history)
-                
-                # 保存历史
-                await self._save_history(history, stage, total_chars)
+                    
+                    print(f"[HISTORY COMPRESS] After: {total_chars} chars, {len(history)} messages", flush=True)
+                    
+                    # 推送压缩通知给前端
+                    await stream_manager.broadcast(self.session_obj.session_id, {
+                        "type": "history_compressed",
+                        "stage": stage,
+                        "message": f"历史会话已压缩（{stage} 阶段），节省上下文空间",
+                        "new_char_count": total_chars
+                    })
+                    
+                    # 只在压缩后保存历史，减少数据库写入
+                    await self._save_history(history, stage, total_chars)
                 
             except Exception as e:
                 segment.status = "failed"
@@ -391,17 +411,49 @@ class OptimizationService:
         ]
     
     async def _save_history(self, history: List[Dict[str, str]], stage: str, char_count: int):
-        """保存历史会话"""
+        """保存历史会话 - 只在压缩后保存
+        
+        只有压缩后的历史才保存到数据库，以避免频繁写入导致数据库膨胀。
+        压缩后的内容单独保存，不影响已完成的润色和增强文本。
+        
+        注意：未压缩的历史不会保存，因为：
+        1. 润色/增强后的文本已经保存在 segments 表中
+        2. 压缩只在字符数超过阈值时触发
+        3. 压缩后的历史用于后续段落的上下文参考
+        """
+        # 检测是否为压缩后的历史：压缩后只有一条 system 消息，包含之前处理的摘要
+        # 这种检测方式与 _compress_history 的返回格式保持一致
+        is_compressed = len(history) == 1 and history[0].get("role") == "system"
+        
+        if not is_compressed:
+            return  # 非压缩状态不保存，减少数据库写入
+        
         def save():
-            history_obj = SessionHistory(
-                session_id=self.session_obj.id,
-                stage=stage,
-                history_data=json.dumps(history, ensure_ascii=False),
-                is_compressed=len(history) == 1 and history[0]["role"] == "system",
-                character_count=char_count
-            )
-            self.db.add(history_obj)
+            # 检查是否已存在该阶段的压缩记录
+            existing = self.db.query(SessionHistory).filter(
+                SessionHistory.session_id == self.session_obj.id,
+                SessionHistory.stage == stage,
+                SessionHistory.is_compressed == True
+            ).first()
+            
+            if existing:
+                # 更新现有记录
+                existing.history_data = json.dumps(history, ensure_ascii=False)
+                existing.character_count = char_count
+                existing.created_at = datetime.utcnow()
+            else:
+                # 创建新记录
+                history_obj = SessionHistory(
+                    session_id=self.session_obj.id,
+                    stage=stage,
+                    history_data=json.dumps(history, ensure_ascii=False),
+                    is_compressed=True,
+                    character_count=char_count
+                )
+                self.db.add(history_obj)
+            
             self.db.commit()
+        
         await run_in_threadpool(save)
     
     async def _record_change(

@@ -18,31 +18,42 @@ const SessionDetailPage = () => {
   const [exportFormat, setExportFormat] = useState('txt');
 
   useEffect(() => {
-    loadSessionDetail();
-    loadChanges();
+    let eventSource = null;
+    
+    const initializeSession = async () => {
+      // 先加载数据
+      await loadSessionDetail();
+      await loadChanges();
+      
+      // 数据加载完成后再建立 SSE 连接
+      const streamUrl = optimizationAPI.getStreamUrl(sessionId);
+      eventSource = new EventSource(streamUrl);
 
-    // 建立 SSE 连接
-    const streamUrl = optimizationAPI.getStreamUrl(sessionId);
-    const eventSource = new EventSource(streamUrl);
-
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'content') {
-          handleStreamUpdate(data);
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'content') {
+            handleStreamUpdate(data);
+          } else if (data.type === 'history_compressed') {
+            toast.info(data.message);
+          }
+        } catch (error) {
+          console.error('Error parsing SSE data:', error);
         }
-      } catch (error) {
-        console.error('Error parsing SSE data:', error);
-      }
-    };
+      };
 
-    eventSource.onerror = (error) => {
-      console.error('SSE Error:', error);
-      eventSource.close();
+      eventSource.onerror = (error) => {
+        console.error('SSE Error:', error);
+        eventSource.close();
+      };
     };
-
+    
+    initializeSession();
+    
     return () => {
-      eventSource.close();
+      if (eventSource) {
+        eventSource.close();
+      }
     };
   }, [sessionId]);
 
