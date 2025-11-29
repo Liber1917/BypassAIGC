@@ -21,6 +21,10 @@ gptzero
 
 ## 快速开始
 
+```
+git clone https://github.com/chi111i/BypassAIGC.git
+```
+
 ### 1. 使用统一启动脚本
 
 所有系统现已整合为统一的交互式脚本，通过菜单选择所需功能：
@@ -420,6 +424,7 @@ A: 检查 API Key 和 Base URL 配置是否正确
 Creative Commons (CC BY-NC-SA 4.0)
 
 [![Star History Chart](https://api.star-history.com/svg?repos=chi111i/BypassAIGC&type=Date)](https://star-history.com/#chi111i/BypassAIGC)
+
 
 
 
