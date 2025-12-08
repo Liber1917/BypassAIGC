@@ -72,6 +72,7 @@ const ConfigManager = ({ adminToken }) => {
       const updates = {};
       Object.keys(formData).forEach(key => {
         // 对于 USE_STREAMING 布尔值，转换为字符串 'true' 或 'false'
+        // 后端会将其写入 .env 文件并自动转换回布尔值
         if (key === 'USE_STREAMING') {
           updates[key] = formData[key] ? 'true' : 'false';
         } else if (formData[key] && formData[key].toString().trim()) {

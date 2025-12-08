@@ -76,7 +76,7 @@ This update addresses critical issues with the Gemini API integration and adds c
 ### New Environment Variable
 
 ```bash
-# Flow streaming output configuration (recommended to keep default)
+# Streaming output configuration (recommended to keep default)
 USE_STREAMING=false  # Default: false to avoid API blocking
 ```
 
