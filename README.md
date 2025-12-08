@@ -129,6 +129,9 @@ COMPRESSION_MODEL=gemini-2.5-pro
 COMPRESSION_API_KEY=KEY
 COMPRESSION_BASE_URL=http://IP:PORT/v1
 
+# 流式输出配置（推荐保持默认值）
+USE_STREAMING=false  # 默认禁用，避免某些API（如Gemini）返回阻止错误
+
 # JWT 密钥
 SECRET_KEY=JWT-key
 ALGORITHM=HS256
@@ -145,6 +148,7 @@ SEGMENT_SKIP_THRESHOLD=15
 **注意:** 
 - 推荐使用 Google Gemini 2.5 Pro 模型以获得更好的性能和成本效益
 - BASE_URL 使用 OpenAI 兼容格式，需要配置支持 OpenAI API 格式的代理服务
+- **流式输出默认禁用**：为避免某些 API（如 Gemini）返回阻止错误，系统默认使用非流式模式。可在管理后台的"系统配置"中切换
 
 ### 3. 使用命令行安装和部署（不使用启动脚本）
 
@@ -353,6 +357,7 @@ npm run dev
 | `DEFAULT_USAGE_LIMIT` | 新用户默认使用次数 | 1 |
 | `SEGMENT_SKIP_THRESHOLD` | 段落跳过阈值（字符数） | 15 |
 | `HISTORY_COMPRESSION_THRESHOLD` | 历史压缩阈值 | 5000 |
+| `USE_STREAMING` | 启用流式输出模式 | false（推荐）|
 
 ## 项目结构
 
@@ -441,6 +446,24 @@ A: 使用统一脚本的菜单选项 7 查看详细错误信息
 
 **Q: AI 调用失败？**  
 A: 检查 API Key 和 Base URL 配置是否正确
+
+**Q: Gemini API 返回 "Your request was blocked" 错误？**  
+A: 这是因为 Gemini API 可能阻止流式请求。解决方法：
+1. 登录管理后台 `http://localhost:3000/admin`
+2. 进入"系统配置"标签页
+3. 找到"流式输出模式"开关，确保它是**禁用**状态（推荐）
+4. 点击"保存配置"按钮
+5. 重新运行优化任务
+
+默认配置已经禁用了流式输出，如果仍然遇到此问题，请检查 `.env` 文件中的 `USE_STREAMING` 设置是否为 `false`
+
+**Q: 管理后台登录显示 "Not Found"？**  
+A: 这可能是环境配置问题：
+1. 确保后端服务正在运行（检查 http://localhost:8000/health）
+2. 确认前端配置正确指向后端 API（默认为 `/api`）
+3. 检查浏览器控制台是否有错误信息
+4. 尝试清除浏览器缓存后重新登录
+5. 确认 `.env` 文件中的 `SECRET_KEY` 已正确配置
 
 ## 自行构建可执行文件
 
