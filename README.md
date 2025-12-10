@@ -21,8 +21,6 @@ gptzero
 
 ## 快速开始
 
-### 使用可执行文件（推荐）
-
 无需安装任何开发环境，下载即可使用！
 
 1. 从 [Releases](https://github.com/chi111i/BypassAIGC/releases) 页面下载对应平台的可执行文件：
@@ -38,46 +36,15 @@ gptzero
    - JWT 密钥（SECRET_KEY）
 
 4. 再次运行程序，将自动打开浏览器
+
 5. 访问管理后台创建卡密
+
 > 💡 提示：数据库文件 `ai_polish.db` 和配置文件 `.env` 都保存在可执行文件同目录，方便备份和迁移。
 
-### 开发者模式（仅供开发调试使用）
+### 配置文件说明
 
-⚠️ **注意：此方式仅供开发者调试使用，普通用户请使用上述可执行文件方式。**
+`.env` 配置文件包含以下重要配置项：
 
-如果你需要修改源代码或进行开发调试：
-
-```bash
-git clone https://github.com/chi111i/BypassAIGC.git
-cd BypassAIGC
-```
-
-#### 快速启动（推荐）
-
-使用启动脚本快速设置开发环境：
-
-**macOS:**
-```bash
-chmod +x start-macos.sh
-./start-macos.sh
-```
-
-**Windows:**
-```powershell
-.\start.ps1
-```
-
-**Linux:**
-```bash
-chmod +x start.sh
-./start.sh
-```
-
-选择菜单中的选项 1 安装环境，然后选择选项 2 启动服务。
-
-#### 配置文件
-
-在 `backend/.env` 中配置：
 ```properties
 # 数据库配置
 DATABASE_URL=sqlite:///./ai_polish.db
@@ -127,7 +94,6 @@ ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
 DEFAULT_USAGE_LIMIT=1
 SEGMENT_SKIP_THRESHOLD=15
-
 ```
 
 **注意:** 
@@ -135,11 +101,11 @@ SEGMENT_SKIP_THRESHOLD=15
 - BASE_URL 使用 OpenAI 兼容格式，需要配置支持 OpenAI API 格式的代理服务
 - **流式输出默认禁用**：为避免某些 API（如 Gemini）返回阻止错误，系统默认使用非流式模式。可在管理后台的"系统配置"中切换
 
-#### 访问地址（开发模式）
-- 前端: http://localhost:3000
-- 后端 API: http://localhost:8000
+### 访问地址
+
+- 用户界面: http://localhost:8000
+- 管理后台: http://localhost:8000/admin
 - API 文档: http://localhost:8000/docs
-- 管理后台: http://localhost:3000/admin
 
 ## 功能特性
 
@@ -152,11 +118,7 @@ SEGMENT_SKIP_THRESHOLD=15
 
 ## 管理后台
 
-访问后台 `/admin` 路径使用管理员账户登录
-
-> 注意：
-> - 可执行文件版本：访问 `http://localhost:8000/admin`
-> - 开发模式：访问 `http://localhost:3000/admin`
+访问 `http://localhost:8000/admin` 使用管理员账户登录
 
 ### 功能模块
 - 📊 **数据面板**: 用户统计、会话分析
@@ -203,9 +165,7 @@ AI_GC/
 ## 常见问题
 
 **Q: 端口被占用？**  
-A: 
-- 可执行文件版本：关闭其他占用 8000 端口的程序
-- 开发模式：使用启动脚本的菜单选项 5 停止所有服务
+A: 关闭其他占用 8000 端口的程序
 
 **Q: 配置修改后未生效？**  
 A: 重启程序使配置生效
@@ -218,19 +178,13 @@ A: 检查 API Key 和 Base URL 配置是否正确
 
 **Q: Gemini API 返回 "Your request was blocked" 错误？**  
 A: 这是因为 Gemini API 可能阻止流式请求。解决方法：
-1. 登录管理后台（可执行文件版本使用 `/admin` 路径）
+1. 登录管理后台 (`http://localhost:8000/admin`)
 2. 进入"系统配置"标签页
 3. 找到"流式输出模式"开关，确保它是**禁用**状态（推荐）
 4. 点击"保存配置"按钮
 5. 重新运行优化任务
 
 默认配置已经禁用了流式输出，如果仍然遇到此问题，请检查 `.env` 文件中的 `USE_STREAMING` 设置是否为 `false`
-
-**Q: 管理后台登录显示 "Not Found" 或 404 错误？**  
-A: 请确保使用的是可执行文件版本（推荐方式）：
-1. 从 Releases 下载并使用可执行文件，所有路由已正确配置
-2. 如果是开发模式，确保使用启动脚本同时启动前后端
-3. 检查浏览器控制台是否有错误信息
 
 ## 自行构建可执行文件
 
