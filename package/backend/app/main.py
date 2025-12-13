@@ -173,16 +173,14 @@ async def _check_model_health(model_name: str, model: str, api_key: Optional[str
         # URL 有效时才检查缓存（此时 base_url 不为 None）
         if base_url in _url_check_cache:
             cached_result = _url_check_cache[base_url]
-            return {
-                "status": cached_result["status"],
-                "model": model,
-                "base_url": base_url,
-                "error": cached_result.get("error")
-            } if cached_result["status"] == "unavailable" else {
+            result = {
                 "status": cached_result["status"],
                 "model": model,
                 "base_url": base_url
             }
+            if cached_result["status"] == "unavailable":
+                result["error"] = cached_result.get("error")
+            return result
         
         # URL 格式正确，认为配置有效
         result = {
