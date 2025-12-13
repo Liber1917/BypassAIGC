@@ -54,9 +54,6 @@ class AIService:
                     print(f"  [{idx}] {role}: {content_preview}", flush=True)
                 print("="*80 + "\n", flush=True)
 
-            if not self.client:
-                raise Exception("AI客户端未初始化")
-
             stream = await self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
@@ -110,9 +107,6 @@ class AIService:
                     print(f"  Message [{idx}] Role: {role}", flush=True)
                     print(f"  Content: {content_preview}", flush=True)
                 print("="*80 + "\n", flush=True)
-
-            if not self.client:
-                raise Exception("AI客户端未初始化")
 
             response = await self.client.chat.completions.create(
                 model=self.model,

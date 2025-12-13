@@ -145,14 +145,14 @@ async def _check_model_health(model_name: str, model: str, api_key: Optional[str
             }
         
         # 验证 base_url 是否符合 OpenAI API 格式
-        # OpenAI 兼容的 API 通常以 /v1 结尾
-        url_pattern = re.compile(r'^https?://.+', re.IGNORECASE)
+        # 使用更严格的 URL 验证模式
+        url_pattern = re.compile(r'^https?://[^\s/$.?#].[^\s]*$', re.IGNORECASE)
         if not url_pattern.match(base_url):
             return {
                 "status": "unavailable",
                 "model": model,
                 "base_url": base_url,
-                "error": "Base URL 格式不正确，应以 http:// 或 https:// 开头"
+                "error": "Base URL 格式不正确，应为有效的 HTTP/HTTPS URL"
             }
         
         # URL 格式正确，认为配置有效
