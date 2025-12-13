@@ -57,7 +57,7 @@ from app.database import init_db
 from app.routes import admin, prompts, optimization
 from app.models.models import CustomPrompt
 from app.database import SessionLocal
-from app.services.ai_service import AIService, get_default_polish_prompt, get_default_enhance_prompt
+from app.services.ai_service import get_default_polish_prompt, get_default_enhance_prompt
 
 # 检查默认密钥（仅警告，不退出）
 if settings.SECRET_KEY == "your-secret-key-change-this-in-production":
@@ -181,17 +181,19 @@ async def health_check():
 
 async def _check_model_health(model_name: str, model: str, api_key: Optional[str], base_url: Optional[str]) -> dict:
     """检查单个模型的健康状态"""
+    from app.services.ai_service import AIService
+    
     try:
         service = AIService(
             model=model,
             api_key=api_key,
             base_url=base_url
         )
-        # 发送最小化测试请求验证模型可用性，减少API成本
+        # 发送简单测试请求验证模型可用性
         await service.complete(
-            messages=[{"role": "user", "content": "hi"}],
-            temperature=0,
-            max_tokens=5
+            messages=[{"role": "user", "content": "test"}],
+            temperature=0.7,
+            max_tokens=10
         )
         return {
             "status": "available",
