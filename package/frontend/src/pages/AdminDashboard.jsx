@@ -397,56 +397,76 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="bg-white border-b">
+      {/* Tabs Navigation - Enhanced Design */}
+      <div className="bg-gradient-to-r from-gray-50 via-white to-gray-50 border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8 overflow-x-auto">
+          <div className="flex space-x-2 overflow-x-auto py-3">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+              className={`group relative flex items-center gap-2.5 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ease-out ${
                 activeTab === 'dashboard'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105'
+                  : 'bg-white text-gray-600 hover:text-blue-600 hover:bg-blue-50 hover:shadow-md border border-gray-200'
               }`}
             >
-              <BarChart3 className="w-5 h-5" />
-              数据面板
+              <BarChart3 className={`w-5 h-5 transition-transform duration-300 ${
+                activeTab === 'dashboard' ? 'scale-110' : 'group-hover:scale-110'
+              }`} />
+              <span className="whitespace-nowrap">数据面板</span>
+              {activeTab === 'dashboard' && (
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-white rounded-full"></div>
+              )}
             </button>
             
             <button
               onClick={() => setActiveTab('sessions')}
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+              className={`group relative flex items-center gap-2.5 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ease-out ${
                 activeTab === 'sessions'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/30 scale-105'
+                  : 'bg-white text-gray-600 hover:text-purple-600 hover:bg-purple-50 hover:shadow-md border border-gray-200'
               }`}
             >
-              <Activity className="w-5 h-5" />
-              会话监控
+              <Activity className={`w-5 h-5 transition-transform duration-300 ${
+                activeTab === 'sessions' ? 'scale-110' : 'group-hover:scale-110'
+              }`} />
+              <span className="whitespace-nowrap">会话监控</span>
+              {activeTab === 'sessions' && (
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-white rounded-full"></div>
+              )}
             </button>
             
             <button
               onClick={() => setActiveTab('database')}
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+              className={`group relative flex items-center gap-2.5 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ease-out ${
                 activeTab === 'database'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-105'
+                  : 'bg-white text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 hover:shadow-md border border-gray-200'
               }`}
             >
-              <Database className="w-5 h-5" />
-              数据库管理
+              <Database className={`w-5 h-5 transition-transform duration-300 ${
+                activeTab === 'database' ? 'scale-110' : 'group-hover:scale-110'
+              }`} />
+              <span className="whitespace-nowrap">数据库管理</span>
+              {activeTab === 'database' && (
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-white rounded-full"></div>
+              )}
             </button>
             
             <button
               onClick={() => setActiveTab('config')}
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+              className={`group relative flex items-center gap-2.5 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ease-out ${
                 activeTab === 'config'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-lg shadow-amber-500/30 scale-105'
+                  : 'bg-white text-gray-600 hover:text-amber-600 hover:bg-amber-50 hover:shadow-md border border-gray-200'
               }`}
             >
-              <Settings className="w-5 h-5" />
-              系统配置
+              <Settings className={`w-5 h-5 transition-transform duration-300 ${
+                activeTab === 'config' ? 'scale-110' : 'group-hover:scale-110'
+              }`} />
+              <span className="whitespace-nowrap">系统配置</span>
+              {activeTab === 'config' && (
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-white rounded-full"></div>
+              )}
             </button>
           </div>
         </div>
