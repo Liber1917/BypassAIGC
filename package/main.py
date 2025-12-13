@@ -10,6 +10,7 @@ import webbrowser
 import threading
 import time
 import signal
+from typing import Optional
 
 # 获取应用运行目录
 if getattr(sys, 'frozen', False):
@@ -43,9 +44,9 @@ backend_path = os.path.join(APP_DIR, 'backend') if not getattr(sys, 'frozen', Fa
 if backend_path not in sys.path:
     sys.path.insert(0, backend_path)
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Response
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 import uvicorn
@@ -94,6 +95,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 添加中间件：为所有 API 响应添加禁止缓存的头部
+@app.middleware("http")
+async def add_no_cache_headers(request: Request, call_next):
+    """为 API 请求添加禁止缓存的响应头"""
+    response = await call_next(request)
+    
+    # 只对 API 路径添加禁止缓存头，静态资源可以缓存
+    if request.url.path.startswith('/api/'):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    
+    return response
 
 # 注册 API 路由（添加 /api 前缀，与 backend/app/main.py 保持一致）
 app.include_router(admin.router, prefix="/api")
@@ -154,7 +169,94 @@ async def startup_event():
 @app.get("/health")
 async def health_check():
     """健康检查"""
-    return {"status": "healthy"}
+    return JSONResponse(
+        content={"status": "healthy"},
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
+
+
+async def _check_model_health(model_name: str, model: str, api_key: Optional[str], base_url: Optional[str]) -> dict:
+    """检查单个模型的健康状态"""
+    from app.services.ai_service import AIService
+    
+    try:
+        service = AIService(
+            model=model,
+            api_key=api_key,
+            base_url=base_url
+        )
+        # 发送简单测试请求验证模型可用性
+        await service.complete(
+            messages=[{"role": "user", "content": "test"}],
+            temperature=0.7,
+            max_tokens=10
+        )
+        return {
+            "status": "available",
+            "model": model,
+            "base_url": base_url
+        }
+    except Exception as e:
+        return {
+            "status": "unavailable",
+            "model": model,
+            "base_url": base_url,
+            "error": str(e)
+        }
+
+
+@app.get("/api/health/models")
+async def check_models_health():
+    """检查 AI 模型可用性"""
+    results = {
+        "overall_status": "healthy",
+        "models": {}
+    }
+    
+    # 检查润色模型
+    results["models"]["polish"] = await _check_model_health(
+        "polish",
+        settings.POLISH_MODEL,
+        settings.POLISH_API_KEY,
+        settings.POLISH_BASE_URL
+    )
+    if results["models"]["polish"]["status"] == "unavailable":
+        results["overall_status"] = "degraded"
+    
+    # 检查增强模型
+    results["models"]["enhance"] = await _check_model_health(
+        "enhance",
+        settings.ENHANCE_MODEL,
+        settings.ENHANCE_API_KEY,
+        settings.ENHANCE_BASE_URL
+    )
+    if results["models"]["enhance"]["status"] == "unavailable":
+        results["overall_status"] = "degraded"
+    
+    # 检查感情润色模型（如果配置了）
+    if settings.EMOTION_MODEL:
+        results["models"]["emotion"] = await _check_model_health(
+            "emotion",
+            settings.EMOTION_MODEL,
+            settings.EMOTION_API_KEY,
+            settings.EMOTION_BASE_URL
+        )
+        if results["models"]["emotion"]["status"] == "unavailable":
+            results["overall_status"] = "degraded"
+    
+    # 返回带缓存控制头的响应，确保数据始终是最新的
+    return JSONResponse(
+        content=results,
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
 
 
 # 挂载静态文件（前端构建产物）
