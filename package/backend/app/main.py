@@ -159,7 +159,18 @@ async def _check_model_health(model_name: str, model: str, api_key: Optional[str
                 "error": "模型名称未配置"
             }
         
-        # 检查 URL 是否已经被检查过（相同 URL 只检查一次）
+        # 先检查 URL 格式是否有效
+        is_valid, error_msg = _check_url_format(base_url)
+        
+        if not is_valid:
+            return {
+                "status": "unavailable",
+                "model": model,
+                "base_url": base_url,
+                "error": error_msg
+            }
+        
+        # URL 有效时才检查缓存（此时 base_url 不为 None）
         if base_url in _url_check_cache:
             cached_result = _url_check_cache[base_url]
             return {
@@ -172,20 +183,6 @@ async def _check_model_health(model_name: str, model: str, api_key: Optional[str
                 "model": model,
                 "base_url": base_url
             }
-        
-        # 验证 URL 格式
-        is_valid, error_msg = _check_url_format(base_url)
-        
-        if not is_valid:
-            result = {
-                "status": "unavailable",
-                "model": model,
-                "base_url": base_url,
-                "error": error_msg
-            }
-            # 缓存检查结果
-            _url_check_cache[base_url] = {"status": "unavailable", "error": error_msg}
-            return result
         
         # URL 格式正确，认为配置有效
         result = {
