@@ -232,9 +232,10 @@ const ArticlePreprocessorPage = () => {
       if (es.readyState === EventSource.CLOSED) {
         return;
       }
-      // Retry fetching result
-      setTimeout(() => fetchResult(jobId), 1000);
+      console.log('SSE connection error, will retry fetching result...');
       es.close();
+      // 延迟后尝试获取结果，如果任务仍在运行会自动忽略
+      setTimeout(() => fetchResult(jobId), 2000);
     };
   };
 
@@ -267,13 +268,23 @@ const ArticlePreprocessorPage = () => {
           processedHash: response.data.processed_hash,
         });
         setJobStatus('completed');
+      } else {
+        // 任务失败
+        setJobStatus('failed');
+        toast.error(response.data.error || '预处理失败');
       }
     } catch (error) {
       console.error('Fetch result failed:', error);
-      // Job might still be running
-      if (error.response?.status === 404) {
+      const status = error.response?.status;
+      if (status === 404) {
         toast.error('任务不存在或已过期');
         setJobStatus(null);
+      } else if (status === 400) {
+        // 任务尚未完成，保持当前状态
+        console.log('任务尚未完成，稍后重试');
+      } else {
+        // 其他错误
+        console.error('获取结果失败:', error.response?.data?.detail || error.message);
       }
     }
   };
@@ -413,18 +424,45 @@ const ArticlePreprocessorPage = () => {
 
   // Render progress bar
   const renderProgress = () => {
-    if (!progress) return null;
+    // 后端发送: { phase, progress (0-1), message, detail }
+    // detail 格式: "分块 x/y" 或 null
 
-    const percentage = Math.round((progress.current_chunk / progress.total_chunks) * 100) || 0;
+    // 没有进度数据时显示加载中状态
+    if (!progress) {
+      return (
+        <div className="bg-white rounded-lg border p-4 mb-4">
+          <div className="flex items-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
+            <span className="text-sm font-medium text-gray-700">正在初始化预处理任务...</span>
+          </div>
+        </div>
+      );
+    }
+
+    const percentage = Math.round((progress.progress || 0) * 100);
+
+    // 解析 detail 获取分块信息
+    let chunkInfo = '';
+    if (progress.detail) {
+      chunkInfo = progress.detail;
+    }
+
+    // 根据后端 phase 值显示消息
+    const phaseMessages = {
+      splitting: '正在分割文章...',
+      marking: `正在识别段落类型${chunkInfo ? ` (${chunkInfo})` : ''}`,
+      validating: '正在验证完整性...',
+      completed: '处理完成',
+      error: '处理出错',
+    };
+
+    const displayMessage = progress.message || phaseMessages[progress.phase] || '处理中...';
 
     return (
       <div className="bg-white rounded-lg border p-4 mb-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-gray-700">
-            {progress.phase === 'splitting' && '正在分割文章...'}
-            {progress.phase === 'recognizing' && `正在识别段落类型 (${progress.current_chunk}/${progress.total_chunks})`}
-            {progress.phase === 'merging' && '正在合并结果...'}
-            {progress.phase === 'verifying' && '正在验证完整性...'}
+            {displayMessage}
           </span>
           <span className="text-sm text-gray-500">{percentage}%</span>
         </div>
@@ -434,11 +472,6 @@ const ArticlePreprocessorPage = () => {
             style={{ width: `${percentage}%` }}
           />
         </div>
-        {progress.current_chunk_preview && (
-          <div className="mt-2 text-xs text-gray-500 truncate">
-            处理中: {progress.current_chunk_preview}...
-          </div>
-        )}
       </div>
     );
   };
