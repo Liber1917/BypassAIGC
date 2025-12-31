@@ -6,6 +6,7 @@ Features:
 - SSE (Server-Sent Events) progress streaming
 - Job status tracking
 - File cleanup
+- Support for both format and preprocess jobs
 """
 from __future__ import annotations
 
@@ -24,7 +25,12 @@ from .compiler import (
     CompileProgress,
     CompileResult,
     compile_document,
-    compile_document_with_ai,
+)
+from .preprocessor import (
+    ArticlePreprocessor,
+    PreprocessConfig,
+    PreprocessProgress,
+    PreprocessResult,
 )
 
 
@@ -34,6 +40,12 @@ class JobStatus(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
+
+
+class JobType(str, Enum):
+    """Job type enumeration."""
+    FORMAT = "format"
+    PREPROCESS = "preprocess"
 
 
 @dataclass
@@ -48,19 +60,25 @@ class JobProgress:
 @dataclass
 class Job:
     job_id: str
+    job_type: JobType
     user_id: Optional[str]
     status: JobStatus
     created_at: datetime
     updated_at: datetime
     input_text: Optional[str] = None
     input_file_name: Optional[str] = None
+    # Format job fields
     options: Optional[CompileOptions] = None
     result: Optional[CompileResult] = None
+    output_bytes: Optional[bytes] = None
+    output_filename: Optional[str] = None
+    # Preprocess job fields
+    preprocess_config: Optional[PreprocessConfig] = None
+    preprocess_result: Optional[PreprocessResult] = None
+    # Common fields
     progress_history: List[JobProgress] = field(default_factory=list)
     current_progress: Optional[JobProgress] = None
     error: Optional[str] = None
-    output_bytes: Optional[bytes] = None
-    output_filename: Optional[str] = None
 
 
 class JobManager:
@@ -81,10 +99,12 @@ class JobManager:
 
     def create_job(
         self,
+        job_type: JobType = JobType.FORMAT,
         user_id: Optional[str] = None,
         input_text: Optional[str] = None,
         input_file_name: Optional[str] = None,
         options: Optional[CompileOptions] = None,
+        preprocess_config: Optional[PreprocessConfig] = None,
     ) -> Job:
         """Create a new job and return it."""
         job_id = str(uuid.uuid4())
@@ -92,6 +112,7 @@ class JobManager:
 
         job = Job(
             job_id=job_id,
+            job_type=job_type,
             user_id=user_id,
             status=JobStatus.PENDING,
             created_at=now,
@@ -99,12 +120,13 @@ class JobManager:
             input_text=input_text,
             input_file_name=input_file_name,
             options=options,
+            preprocess_config=preprocess_config,
         )
 
         self._jobs[job_id] = job
         self._job_locks[job_id] = asyncio.Lock()
 
-        print(f"[WORD-FORMATTER] 创建任务 job_id={job_id[:8]}...", flush=True)
+        print(f"[WORD-FORMATTER] 创建任务 job_id={job_id[:8]}... 类型={job_type.value}", flush=True)
         print(f"[WORD-FORMATTER] 用户ID: {user_id}", flush=True)
         print(f"[WORD-FORMATTER] 输入文件: {input_file_name or '文本输入'}", flush=True)
         print(f"[WORD-FORMATTER] 文本长度: {len(input_text or '')} 字符", flush=True)
@@ -134,7 +156,7 @@ class JobManager:
 
         Args:
             job_id: Job ID to execute
-            ai_service: Optional AI service for enhanced parsing
+            ai_service: AI service instance (required for preprocess jobs)
 
         Returns:
             Updated Job with results
@@ -144,56 +166,20 @@ class JobManager:
             raise ValueError(f"Job not found: {job_id}")
 
         print(f"\n[WORD-FORMATTER] ========== 开始执行任务 ==========", flush=True)
-        print(f"[WORD-FORMATTER] Job ID: {job_id[:8]}...", flush=True)
-        print(f"[WORD-FORMATTER] AI 模式: {'是' if ai_service else '否'}", flush=True)
+        print(f"[WORD-FORMATTER] Job ID: {job_id[:8]}... 类型: {job.job_type.value}", flush=True)
 
         async with self._semaphore:
             async with self._job_locks[job_id]:
                 job.status = JobStatus.RUNNING
                 job.updated_at = datetime.now()
 
-                def progress_callback(p: CompileProgress):
-                    progress = JobProgress(
-                        phase=p.phase.value,
-                        progress=p.progress,
-                        message=p.message,
-                        detail=p.detail,
-                    )
-                    job.current_progress = progress
-                    job.progress_history.append(progress)
-                    job.updated_at = datetime.now()
-
                 try:
-                    options = job.options or CompileOptions()
-
-                    if ai_service:
-                        result = await compile_document_with_ai(
-                            job.input_text or "",
-                            ai_service,
-                            options,
-                            progress_callback,
-                        )
+                    if job.job_type == JobType.FORMAT:
+                        await self._run_format_job(job)
+                    elif job.job_type == JobType.PREPROCESS:
+                        await self._run_preprocess_job(job, ai_service)
                     else:
-                        result = compile_document(
-                            job.input_text or "",
-                            options,
-                            progress_callback,
-                        )
-
-                    job.result = result
-
-                    if result.success:
-                        job.status = JobStatus.COMPLETED
-                        job.output_bytes = result.docx_bytes
-                        job.output_filename = self._generate_output_filename(job)
-                        print(f"[WORD-FORMATTER] ✅ 任务完成 job_id={job_id[:8]}...", flush=True)
-                        print(f"[WORD-FORMATTER] 输出文件: {job.output_filename}", flush=True)
-                        print(f"[WORD-FORMATTER] 文件大小: {len(result.docx_bytes or b'')} 字节", flush=True)
-                    else:
-                        job.status = JobStatus.FAILED
-                        job.error = result.error
-                        print(f"[WORD-FORMATTER] ❌ 任务失败 job_id={job_id[:8]}...", flush=True)
-                        print(f"[WORD-FORMATTER] 错误: {result.error}", flush=True)
+                        raise ValueError(f"Unknown job type: {job.job_type}")
 
                 except Exception as e:
                     import traceback
@@ -207,6 +193,79 @@ class JobManager:
                 job.updated_at = datetime.now()
                 print(f"[WORD-FORMATTER] ========== 任务执行结束 ==========\n", flush=True)
                 return job
+
+    async def _run_format_job(self, job: Job) -> None:
+        """Execute a format job."""
+        def progress_callback(p: CompileProgress):
+            progress = JobProgress(
+                phase=p.phase.value,
+                progress=p.progress,
+                message=p.message,
+                detail=p.detail,
+            )
+            job.current_progress = progress
+            job.progress_history.append(progress)
+            job.updated_at = datetime.now()
+
+        options = job.options or CompileOptions()
+
+        result = compile_document(
+            job.input_text or "",
+            options,
+            progress_callback,
+        )
+
+        job.result = result
+
+        if result.success:
+            job.status = JobStatus.COMPLETED
+            job.output_bytes = result.docx_bytes
+            job.output_filename = self._generate_output_filename(job)
+            print(f"[WORD-FORMATTER] ✅ 格式化任务完成 job_id={job.job_id[:8]}...", flush=True)
+            print(f"[WORD-FORMATTER] 输出文件: {job.output_filename}", flush=True)
+            print(f"[WORD-FORMATTER] 文件大小: {len(result.docx_bytes or b'')} 字节", flush=True)
+        else:
+            job.status = JobStatus.FAILED
+            job.error = result.error
+            print(f"[WORD-FORMATTER] ❌ 格式化任务失败 job_id={job.job_id[:8]}...", flush=True)
+            print(f"[WORD-FORMATTER] 错误: {result.error}", flush=True)
+
+    async def _run_preprocess_job(self, job: Job, ai_service: Any) -> None:
+        """Execute a preprocess job."""
+        if not ai_service:
+            raise ValueError("AI service is required for preprocess jobs")
+
+        def progress_callback(p: PreprocessProgress):
+            progress = JobProgress(
+                phase=p.phase.value,
+                progress=p.processed_paragraphs / max(p.total_paragraphs, 1),
+                message=p.message,
+                detail=f"分块 {p.current_chunk}/{p.total_chunks}" if p.total_chunks > 0 else None,
+            )
+            job.current_progress = progress
+            job.progress_history.append(progress)
+            job.updated_at = datetime.now()
+
+        config = job.preprocess_config or PreprocessConfig()
+        preprocessor = ArticlePreprocessor(ai_service, config)
+
+        result = await preprocessor.preprocess(
+            job.input_text or "",
+            progress_callback,
+        )
+
+        job.preprocess_result = result
+
+        if result.success:
+            job.status = JobStatus.COMPLETED
+            print(f"[WORD-FORMATTER] ✅ 预处理任务完成 job_id={job.job_id[:8]}...", flush=True)
+            print(f"[WORD-FORMATTER] 段落数: {len(result.paragraphs)}", flush=True)
+            print(f"[WORD-FORMATTER] 一致性校验: {'通过' if result.integrity_check_passed else '失败'}", flush=True)
+        else:
+            job.status = JobStatus.FAILED
+            job.error = result.error
+            print(f"[WORD-FORMATTER] ❌ 预处理任务失败 job_id={job.job_id[:8]}...", flush=True)
+            print(f"[WORD-FORMATTER] 错误: {result.error}", flush=True)
 
     def _generate_output_filename(self, job: Job) -> str:
         """Generate output filename based on input."""
@@ -274,19 +333,30 @@ class JobManager:
             last_progress_count = len(job.progress_history)
 
             if job.status == JobStatus.COMPLETED:
-                yield {
-                    "event": "completed",
-                    "data": {
-                        "job_id": job.job_id,
-                        "filename": job.output_filename,
-                        "warnings": job.result.warnings if job.result else [],
-                        "report": {
-                            "ok": job.result.report.summary.ok,
-                            "errors": job.result.report.summary.errors,
-                            "warnings": job.result.report.summary.warnings,
-                        } if job.result and job.result.report else None,
-                    },
-                }
+                # 区分不同类型的任务返回不同的完成数据
+                if job.job_type == JobType.FORMAT:
+                    yield {
+                        "event": "completed",
+                        "data": {
+                            "job_id": job.job_id,
+                            "filename": job.output_filename,
+                            "warnings": job.result.warnings if job.result else [],
+                            "report": {
+                                "ok": job.result.report.summary.ok,
+                                "errors": job.result.report.summary.errors,
+                                "warnings": job.result.report.summary.warnings,
+                            } if job.result and job.result.report else None,
+                        },
+                    }
+                else:
+                    # PREPROCESS 任务
+                    yield {
+                        "event": "completed",
+                        "data": {
+                            "job_id": job.job_id,
+                            "success": job.preprocess_result is not None,
+                        },
+                    }
                 return
 
             if job.status == JobStatus.FAILED:

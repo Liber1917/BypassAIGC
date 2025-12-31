@@ -20,7 +20,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from app.config import settings
 from app.database import get_db
-from app.models.models import User
+from app.models.models import User, SavedSpec
 from app.services.ai_service import AIService
 
 from .services import (
@@ -28,16 +28,18 @@ from .services import (
     CompilePhase,
     InputFormat,
     Job,
+    JobType,
     JobStatus,
     ai_generate_spec,
     builtin_specs,
     compile_document,
-    compile_document_with_ai,
     detect_input_format,
     export_spec_to_json,
     get_job_manager,
     get_spec_schema,
     validate_custom_spec,
+    PreprocessConfig,
+    PreprocessResult,
 )
 from .utils.docx_text import extract_text_from_docx
 
@@ -55,7 +57,6 @@ class FormatRequest(BaseModel):
     include_cover: bool = True
     include_toc: bool = True
     toc_title: str = "目 录"
-    use_ai_recognition: bool = False
 
 
 class FormatFileRequest(BaseModel):
@@ -66,7 +67,6 @@ class FormatFileRequest(BaseModel):
     include_cover: bool = True
     include_toc: bool = True
     toc_title: str = "目 录"
-    use_ai_recognition: bool = False
 
 
 class GenerateSpecRequest(BaseModel):
@@ -107,6 +107,76 @@ class UsageInfoResponse(BaseModel):
     usage_count: int
     usage_limit: int
     remaining: int
+
+
+# Preprocess Request/Response Models
+class PreprocessRequest(BaseModel):
+    """Request for text preprocessing."""
+    text: str = Field(..., min_length=10, description="原始文章文本")
+    chunk_paragraphs: int = Field(40, ge=10, le=100, description="每块最大段落数")
+    chunk_chars: int = Field(8000, ge=2000, le=15000, description="每块最大字符数")
+
+
+class PreprocessJobResponse(BaseModel):
+    """Response for preprocess job creation."""
+    job_id: str
+    status: str
+    message: str
+
+
+class PreprocessProgressEvent(BaseModel):
+    """SSE progress event for preprocessing."""
+    phase: str
+    total_paragraphs: int
+    processed_paragraphs: int
+    current_chunk: int
+    total_chunks: int
+    message: str
+    error: Optional[str] = None
+    is_recoverable: bool = True
+
+
+class ParagraphInfoResponse(BaseModel):
+    """Paragraph info in preprocess result."""
+    index: int
+    text: str
+    paragraph_type: Optional[str] = None
+    confidence: float = 0.0
+    is_rule_identified: bool = False
+
+
+class PreprocessResultResponse(BaseModel):
+    """Response for preprocess result."""
+    success: bool
+    marked_text: str = ""
+    paragraphs: List[ParagraphInfoResponse] = []
+    type_statistics: dict = {}
+    integrity_check_passed: bool = False
+    warnings: List[str] = []
+    error: Optional[str] = None
+
+
+# Saved Spec Request/Response Models
+class SaveSpecRequest(BaseModel):
+    """Request to save a spec."""
+    name: str = Field(..., min_length=1, max_length=100, description="规范名称")
+    spec_json: str = Field(..., min_length=10, description="规范 JSON 内容")
+    description: Optional[str] = Field(None, max_length=500, description="规范描述")
+
+
+class SavedSpecResponse(BaseModel):
+    """Response for a saved spec."""
+    id: int
+    name: str
+    description: Optional[str] = None
+    spec_json: str
+    created_at: str
+    updated_at: str
+
+
+class SavedSpecListResponse(BaseModel):
+    """Response for saved spec list."""
+    specs: List[SavedSpecResponse]
 
 
 def get_current_user(card_key: str, db: Session = Depends(get_db)) -> User:
@@ -243,7 +313,6 @@ async def format_text(
     print(f"[WORD-FORMATTER] 用户ID: {user.id}", flush=True)
     print(f"[WORD-FORMATTER] 文本长度: {len(request.text)} 字符", flush=True)
     print(f"[WORD-FORMATTER] 规范: {request.spec_name or 'Default'}", flush=True)
-    print(f"[WORD-FORMATTER] AI 识别: {'是' if request.use_ai_recognition else '否'}", flush=True)
     print(f"[WORD-FORMATTER] 封面: {'是' if request.include_cover else '否'}, 目录: {'是' if request.include_toc else '否'}", flush=True)
 
     # Parse input format
@@ -273,6 +342,7 @@ async def format_text(
     # Create job
     job_manager = get_job_manager()
     job = job_manager.create_job(
+        job_type=JobType.FORMAT,
         user_id=str(user.id),
         input_text=request.text,
         options=options,
@@ -280,8 +350,7 @@ async def format_text(
 
     # Run job in background
     async def run_job():
-        ai_service = get_ai_service() if request.use_ai_recognition else None
-        await job_manager.run_job(job.job_id, ai_service)
+        await job_manager.run_job(job.job_id)
         increment_usage(user, db)
 
     background_tasks.add_task(run_job)
@@ -302,7 +371,6 @@ async def format_file(
     include_cover: bool = Query(True),
     include_toc: bool = Query(True),
     toc_title: str = Query("目 录"),
-    use_ai_recognition: bool = Query(False),
     background_tasks: BackgroundTasks = None,
     db: Session = Depends(get_db)
 ):
@@ -317,7 +385,6 @@ async def format_file(
     print(f"[WORD-FORMATTER] 用户ID: {user.id}", flush=True)
     print(f"[WORD-FORMATTER] 文件名: {file.filename}", flush=True)
     print(f"[WORD-FORMATTER] 规范: {spec_name or 'Default'}", flush=True)
-    print(f"[WORD-FORMATTER] AI 识别: {'是' if use_ai_recognition else '否'}", flush=True)
 
     # Check file extension
     ext = file.filename.lower().rsplit(".", 1)[-1] if "." in file.filename else ""
@@ -382,6 +449,7 @@ async def format_file(
     # Create job
     job_manager = get_job_manager()
     job = job_manager.create_job(
+        job_type=JobType.FORMAT,
         user_id=str(user.id),
         input_text=text,
         input_file_name=file.filename,
@@ -390,8 +458,7 @@ async def format_file(
 
     # Run job in background
     async def run_job():
-        ai_service = get_ai_service() if use_ai_recognition else None
-        await job_manager.run_job(job.job_id, ai_service)
+        await job_manager.run_job(job.job_id)
         increment_usage(user, db)
 
     background_tasks.add_task(run_job)
@@ -596,6 +663,7 @@ async def list_jobs(
         "jobs": [
             {
                 "job_id": j.job_id,
+                "job_type": j.job_type.value,
                 "status": j.status.value,
                 "input_file_name": j.input_file_name,
                 "output_filename": j.output_filename,
@@ -605,3 +673,389 @@ async def list_jobs(
             for j in jobs
         ]
     }
+
+
+# ============ Preprocess API Endpoints ============
+
+@router.post("/preprocess/text", response_model=PreprocessJobResponse)
+async def preprocess_text(
+    card_key: str,
+    request: PreprocessRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Start text preprocessing job."""
+    user = get_current_user(card_key, db)
+    check_usage_limit(user)
+
+    print(f"\n[WORD-FORMATTER] ========== 文本预处理请求 ==========", flush=True)
+    print(f"[WORD-FORMATTER] 用户ID: {user.id}", flush=True)
+    print(f"[WORD-FORMATTER] 文本长度: {len(request.text)} 字符", flush=True)
+    print(f"[WORD-FORMATTER] 分块配置: {request.chunk_paragraphs} 段/{request.chunk_chars} 字符", flush=True)
+
+    preprocess_config = PreprocessConfig(
+        chunk_paragraphs=request.chunk_paragraphs,
+        chunk_chars=request.chunk_chars,
+    )
+
+    job_manager = get_job_manager()
+    job = job_manager.create_job(
+        job_type=JobType.PREPROCESS,
+        user_id=str(user.id),
+        input_text=request.text,
+        preprocess_config=preprocess_config,
+    )
+
+    ai_service = get_ai_service()
+
+    async def run_job():
+        await job_manager.run_job(job.job_id, ai_service)
+        increment_usage(user, db)
+
+    background_tasks.add_task(run_job)
+
+    return PreprocessJobResponse(
+        job_id=job.job_id,
+        status=job.status.value,
+        message="预处理任务已创建，正在处理中",
+    )
+
+
+@router.post("/preprocess/file", response_model=PreprocessJobResponse)
+async def preprocess_file(
+    card_key: str,
+    file: UploadFile = File(...),
+    chunk_paragraphs: int = Query(40, ge=10, le=100),
+    chunk_chars: int = Query(8000, ge=2000, le=15000),
+    background_tasks: BackgroundTasks = None,
+    db: Session = Depends(get_db)
+):
+    """Upload and preprocess a document file."""
+    user = get_current_user(card_key, db)
+    check_usage_limit(user)
+
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="文件名不能为空")
+
+    print(f"\n[WORD-FORMATTER] ========== 文件预处理请求 ==========", flush=True)
+    print(f"[WORD-FORMATTER] 用户ID: {user.id}", flush=True)
+    print(f"[WORD-FORMATTER] 文件名: {file.filename}", flush=True)
+
+    ext = file.filename.lower().rsplit(".", 1)[-1] if "." in file.filename else ""
+    if ext not in {"docx", "txt", "md", "markdown"}:
+        raise HTTPException(status_code=400, detail="仅支持 .docx, .txt, .md 文件")
+
+    content = await file.read()
+
+    print(f"[WORD-FORMATTER] 文件大小: {len(content)} 字节", flush=True)
+
+    max_size_mb = settings.MAX_UPLOAD_FILE_SIZE_MB
+    if max_size_mb > 0:
+        file_size_mb = len(content) / (1024 * 1024)
+        if file_size_mb > max_size_mb:
+            raise HTTPException(
+                status_code=400,
+                detail=f"文件大小 ({file_size_mb:.1f} MB) 超过限制 ({max_size_mb} MB)"
+            )
+
+    if ext == "docx":
+        try:
+            text = extract_text_from_docx(content)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"无法解析 docx 文件: {e}")
+    else:
+        try:
+            text = content.decode("utf-8")
+        except UnicodeDecodeError:
+            try:
+                text = content.decode("gbk")
+            except UnicodeDecodeError:
+                raise HTTPException(status_code=400, detail="无法解析文件编码")
+
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="文件内容为空")
+
+    preprocess_config = PreprocessConfig(
+        chunk_paragraphs=chunk_paragraphs,
+        chunk_chars=chunk_chars,
+    )
+
+    job_manager = get_job_manager()
+    job = job_manager.create_job(
+        job_type=JobType.PREPROCESS,
+        user_id=str(user.id),
+        input_text=text,
+        input_file_name=file.filename,
+        preprocess_config=preprocess_config,
+    )
+
+    ai_service = get_ai_service()
+
+    async def run_job():
+        await job_manager.run_job(job.job_id, ai_service)
+        increment_usage(user, db)
+
+    background_tasks.add_task(run_job)
+
+    return PreprocessJobResponse(
+        job_id=job.job_id,
+        status=job.status.value,
+        message="文件已上传，预处理任务正在处理中",
+    )
+
+
+@router.get("/preprocess/{job_id}/stream")
+async def stream_preprocess_progress(
+    job_id: str,
+    request: Request,
+    card_key: str,
+    db: Session = Depends(get_db)
+):
+    """Stream preprocessing progress via SSE."""
+    user = get_current_user(card_key, db)
+
+    job_manager = get_job_manager()
+    job = job_manager.get_job(job_id)
+
+    if not job:
+        raise HTTPException(status_code=404, detail="任务不存在")
+
+    if job.user_id != str(user.id):
+        raise HTTPException(status_code=403, detail="无权访问此任务")
+
+    if job.job_type != JobType.PREPROCESS:
+        raise HTTPException(status_code=400, detail="该任务不是预处理任务")
+
+    async def event_generator():
+        async for event in job_manager.stream_progress(job_id):
+            if await request.is_disconnected():
+                break
+
+            event_type = event.get("event", "message")
+            data = json.dumps(event.get("data", {}), ensure_ascii=False)
+            yield f"event: {event_type}\ndata: {data}\n\n"
+
+    return EventSourceResponse(event_generator())
+
+
+@router.get("/preprocess/{job_id}/result", response_model=PreprocessResultResponse)
+async def get_preprocess_result(
+    job_id: str,
+    card_key: str,
+    db: Session = Depends(get_db)
+):
+    """Get preprocessing result."""
+    user = get_current_user(card_key, db)
+
+    job_manager = get_job_manager()
+    job = job_manager.get_job(job_id)
+
+    if not job:
+        raise HTTPException(status_code=404, detail="任务不存在")
+
+    if job.user_id != str(user.id):
+        raise HTTPException(status_code=403, detail="无权访问此任务")
+
+    if job.job_type != JobType.PREPROCESS:
+        raise HTTPException(status_code=400, detail="该任务不是预处理任务")
+
+    if job.status == JobStatus.PENDING or job.status == JobStatus.RUNNING:
+        raise HTTPException(status_code=400, detail="任务尚未完成")
+
+    if job.status == JobStatus.FAILED:
+        return PreprocessResultResponse(
+            success=False,
+            error=job.error,
+        )
+
+    result = job.preprocess_result
+    if not result:
+        raise HTTPException(status_code=500, detail="预处理结果不存在")
+
+    return PreprocessResultResponse(
+        success=result.success,
+        marked_text=result.marked_text,
+        paragraphs=[
+            ParagraphInfoResponse(
+                index=p.index,
+                text=p.text,
+                paragraph_type=p.paragraph_type,
+                confidence=p.confidence,
+                is_rule_identified=p.is_rule_identified,
+            )
+            for p in result.paragraphs
+        ],
+        type_statistics=result.type_statistics,
+        integrity_check_passed=result.integrity_check_passed,
+        warnings=result.warnings,
+        error=result.error,
+    )
+
+
+@router.delete("/preprocess/{job_id}")
+async def delete_preprocess_job(
+    job_id: str,
+    card_key: str,
+    db: Session = Depends(get_db)
+):
+    """Delete a preprocess job."""
+    user = get_current_user(card_key, db)
+
+    job_manager = get_job_manager()
+    job = job_manager.get_job(job_id)
+
+    if not job:
+        raise HTTPException(status_code=404, detail="任务不存在")
+
+    if job.user_id != str(user.id):
+        raise HTTPException(status_code=403, detail="无权访问此任务")
+
+    if job.job_type != JobType.PREPROCESS:
+        raise HTTPException(status_code=400, detail="该任务不是预处理任务")
+
+    job_manager.delete_job(job_id)
+
+    return {"message": "预处理任务已删除"}
+
+
+# ============ Saved Spec API Endpoints ============
+
+@router.post("/specs/save", response_model=SavedSpecResponse)
+async def save_spec(
+    card_key: str,
+    request: SaveSpecRequest,
+    db: Session = Depends(get_db)
+):
+    """Save a user's custom spec."""
+    user = get_current_user(card_key, db)
+
+    # Validate spec JSON
+    try:
+        validate_custom_spec(request.spec_json)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"规范 JSON 无效: {e}")
+
+    # Check if name already exists for this user
+    existing = db.query(SavedSpec).filter(
+        SavedSpec.user_id == user.id,
+        SavedSpec.name == request.name
+    ).first()
+
+    if existing:
+        # Update existing spec
+        existing.spec_json = request.spec_json
+        existing.description = request.description
+        db.commit()
+        db.refresh(existing)
+
+        print(f"[WORD-FORMATTER] 更新规范 user_id={user.id} name={request.name}", flush=True)
+
+        return SavedSpecResponse(
+            id=existing.id,
+            name=existing.name,
+            description=existing.description,
+            spec_json=existing.spec_json,
+            created_at=existing.created_at.isoformat(),
+            updated_at=existing.updated_at.isoformat(),
+        )
+
+    # Create new spec
+    new_spec = SavedSpec(
+        user_id=user.id,
+        name=request.name,
+        description=request.description,
+        spec_json=request.spec_json,
+    )
+    db.add(new_spec)
+    db.commit()
+    db.refresh(new_spec)
+
+    print(f"[WORD-FORMATTER] 保存规范 user_id={user.id} name={request.name} id={new_spec.id}", flush=True)
+
+    return SavedSpecResponse(
+        id=new_spec.id,
+        name=new_spec.name,
+        description=new_spec.description,
+        spec_json=new_spec.spec_json,
+        created_at=new_spec.created_at.isoformat(),
+        updated_at=new_spec.updated_at.isoformat(),
+    )
+
+
+@router.get("/specs/saved", response_model=SavedSpecListResponse)
+async def list_saved_specs(
+    card_key: str,
+    db: Session = Depends(get_db)
+):
+    """List user's saved specs."""
+    user = get_current_user(card_key, db)
+
+    specs = db.query(SavedSpec).filter(
+        SavedSpec.user_id == user.id
+    ).order_by(SavedSpec.updated_at.desc()).all()
+
+    return SavedSpecListResponse(
+        specs=[
+            SavedSpecResponse(
+                id=s.id,
+                name=s.name,
+                description=s.description,
+                spec_json=s.spec_json,
+                created_at=s.created_at.isoformat(),
+                updated_at=s.updated_at.isoformat(),
+            )
+            for s in specs
+        ]
+    )
+
+
+@router.get("/specs/saved/{spec_id}", response_model=SavedSpecResponse)
+async def get_saved_spec(
+    spec_id: int,
+    card_key: str,
+    db: Session = Depends(get_db)
+):
+    """Get a specific saved spec."""
+    user = get_current_user(card_key, db)
+
+    spec = db.query(SavedSpec).filter(
+        SavedSpec.id == spec_id,
+        SavedSpec.user_id == user.id
+    ).first()
+
+    if not spec:
+        raise HTTPException(status_code=404, detail="规范不存在")
+
+    return SavedSpecResponse(
+        id=spec.id,
+        name=spec.name,
+        description=spec.description,
+        spec_json=spec.spec_json,
+        created_at=spec.created_at.isoformat(),
+        updated_at=spec.updated_at.isoformat(),
+    )
+
+
+@router.delete("/specs/saved/{spec_id}")
+async def delete_saved_spec(
+    spec_id: int,
+    card_key: str,
+    db: Session = Depends(get_db)
+):
+    """Delete a saved spec."""
+    user = get_current_user(card_key, db)
+
+    spec = db.query(SavedSpec).filter(
+        SavedSpec.id == spec_id,
+        SavedSpec.user_id == user.id
+    ).first()
+
+    if not spec:
+        raise HTTPException(status_code=404, detail="规范不存在")
+
+    db.delete(spec)
+    db.commit()
+
+    print(f"[WORD-FORMATTER] 删除规范 user_id={user.id} spec_id={spec_id}", flush=True)
+
+    return {"message": "规范已删除"}

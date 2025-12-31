@@ -1,20 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   FileText, Upload, Download, History, LogOut, Play,
   CheckCircle, AlertCircle, Trash2, Info, Settings,
-  Loader2, FileUp, X, Sparkles
+  Loader2, FileUp, X, ArrowLeft, ArrowRight, Sparkles,
+  Edit3, Eye
 } from 'lucide-react';
 import { wordFormatterAPI } from '../api';
 
 const WordFormatterPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check for data passed from other pages
+  const preprocessedText = location.state?.preprocessedText || null;
+  const passedSpecJson = location.state?.specJson || null;
+  const passedSpecName = location.state?.specName || null;
+
   const [inputMode, setInputMode] = useState('file'); // 'file' or 'text'
   const [text, setText] = useState('');
   const [file, setFile] = useState(null);
   const [specs, setSpecs] = useState([]);
+  const [savedSpecs, setSavedSpecs] = useState([]);
   const [selectedSpec, setSelectedSpec] = useState('Generic_CN');
-  const [useAI, setUseAI] = useState(false);
+  const [customSpecJson, setCustomSpecJson] = useState(null);
   const [includeCover, setIncludeCover] = useState(true);
   const [includeToc, setIncludeToc] = useState(true);
   const [jobs, setJobs] = useState([]);
@@ -23,13 +33,28 @@ const WordFormatterPage = () => {
   const [isLoadingJobs, setIsLoadingJobs] = useState(false);
   const [usage, setUsage] = useState(null);
   const [dragActive, setDragActive] = useState(false);
+  const [showPreviewMode, setShowPreviewMode] = useState(false);
 
   const fileInputRef = useRef(null);
   const eventSourceRef = useRef(null);
-  const navigate = useNavigate();
+
+  // Initialize with passed data
+  useEffect(() => {
+    if (preprocessedText) {
+      setText(preprocessedText);
+      setInputMode('text');
+      toast.success('已加载预处理后的文本');
+    }
+    if (passedSpecJson) {
+      setCustomSpecJson(passedSpecJson);
+      setSelectedSpec('_custom_');
+      toast.success(`已加载规范: ${passedSpecName || '自定义规范'}`);
+    }
+  }, [preprocessedText, passedSpecJson, passedSpecName]);
 
   useEffect(() => {
     loadSpecs();
+    loadSavedSpecs();
     loadJobs();
     loadUsage();
 
@@ -57,6 +82,15 @@ const WordFormatterPage = () => {
       setSpecs(response.data.specs || []);
     } catch (error) {
       console.error('Load specs failed:', error);
+    }
+  };
+
+  const loadSavedSpecs = async () => {
+    try {
+      const response = await wordFormatterAPI.listSavedSpecs();
+      setSavedSpecs(response.data.specs || []);
+    } catch (error) {
+      console.error('Load saved specs failed:', error);
     }
   };
 
@@ -141,17 +175,12 @@ const WordFormatterPage = () => {
       es.close();
     });
 
-    es.onerror = (e) => {
-      // 检查是否是正常的连接关闭（如任务完成后）
+    es.onerror = () => {
       if (es.readyState === EventSource.CLOSED) {
         es.close();
         return;
       }
-
-      // 连接意外中断，尝试获取任务状态
       es.close();
-
-      // 延迟后刷新任务列表以获取最新状态
       setTimeout(() => {
         loadJobs();
       }, 1000);
@@ -183,20 +212,24 @@ const WordFormatterPage = () => {
       setIsSubmitting(true);
       let response;
 
+      // Determine spec to use
+      const specToUse = selectedSpec === '_custom_' ? null : selectedSpec;
+      const specJsonToUse = selectedSpec === '_custom_' ? customSpecJson : null;
+
       if (inputMode === 'file') {
         response = await wordFormatterAPI.formatFile(file, {
-          spec_name: selectedSpec,
+          spec_name: specToUse,
+          spec_json: specJsonToUse,
           include_cover: includeCover,
           include_toc: includeToc,
-          use_ai_recognition: useAI,
         });
       } else {
         response = await wordFormatterAPI.formatText({
           text,
-          spec_name: selectedSpec,
+          spec_name: specToUse,
+          spec_json: specJsonToUse,
           include_cover: includeCover,
           include_toc: includeToc,
-          use_ai_recognition: useAI,
         });
       }
 
@@ -280,11 +313,20 @@ const WordFormatterPage = () => {
     navigate('/');
   };
 
+  const handleSelectSavedSpec = (spec) => {
+    setCustomSpecJson(spec.spec_json);
+    setSelectedSpec('_custom_');
+    toast.success(`已加载保存的规范: ${spec.name}`);
+  };
+
   const formatFileSize = (bytes) => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
+
+  // Check if we have workflow data
+  const hasWorkflowData = preprocessedText || passedSpecJson;
 
   return (
     <div className="min-h-screen bg-ios-background">
@@ -293,6 +335,15 @@ const WordFormatterPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-[52px]">
             <div className="flex items-center gap-2">
+              {hasWorkflowData && (
+                <Link
+                  to="/article-preprocessor"
+                  className="flex items-center gap-1 text-gray-600 hover:text-gray-900 mr-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="text-sm">返回预处理</span>
+                </Link>
+              )}
               <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
                 <FileText className="w-5 h-5 text-white" />
               </div>
@@ -329,6 +380,75 @@ const WordFormatterPage = () => {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Workflow Indicator */}
+        {hasWorkflowData && (
+          <div className="mb-6 flex items-center justify-center gap-2 text-sm text-gray-500">
+            <span className="px-3 py-1 bg-gray-100 rounded-full">1. 生成规范</span>
+            <ArrowRight className="w-4 h-4" />
+            <span className="px-3 py-1 bg-gray-100 rounded-full">2. 文章预处理</span>
+            <ArrowRight className="w-4 h-4" />
+            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
+              3. 生成 Word
+            </span>
+          </div>
+        )}
+
+        {/* Workflow Data Indicators */}
+        {hasWorkflowData && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {preprocessedText && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-sm">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-green-700">已加载预处理文本 ({preprocessedText.length} 字符)</span>
+                <button
+                  onClick={() => setShowPreviewMode(!showPreviewMode)}
+                  className="ml-2 text-green-600 hover:text-green-700"
+                >
+                  {showPreviewMode ? <Eye className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
+                </button>
+              </div>
+            )}
+            {passedSpecJson && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 border border-purple-200 rounded-lg text-sm">
+                <Sparkles className="w-4 h-4 text-purple-600" />
+                <span className="text-purple-700">使用自定义规范: {passedSpecName || '自定义'}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Quick Start Guide - Only show when no workflow data */}
+        {!hasWorkflowData && (
+          <div className="mb-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-5 border border-purple-100">
+            <h3 className="text-[15px] font-semibold text-purple-900 mb-3">推荐工作流程</h3>
+            <div className="flex items-center gap-4 text-sm">
+              <Link
+                to="/spec-generator"
+                className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors"
+              >
+                <span className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                生成排版规范
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/article-preprocessor"
+                className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors"
+              >
+                <span className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                预处理文章
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <span className="flex items-center gap-2 px-4 py-2 bg-purple-100 rounded-lg text-purple-700 font-medium">
+                <span className="w-6 h-6 bg-purple-200 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                生成 Word
+              </span>
+            </div>
+            <p className="mt-3 text-[13px] text-purple-600">
+              或者直接在下方上传文件/输入文本，使用内置规范快速排版
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left - Input Area */}
           <div className="lg:col-span-2 space-y-6">
@@ -351,7 +471,7 @@ const WordFormatterPage = () => {
             <div className="bg-white rounded-2xl shadow-ios p-5">
               <div className="h-[40px] flex items-center justify-between mb-4">
                 <h2 className="text-[20px] font-bold text-black tracking-tight pl-1">
-                  新建任务
+                  {hasWorkflowData ? '确认并开始排版' : '新建任务'}
                 </h2>
 
                 {/* Input Mode Toggle */}
@@ -467,13 +587,58 @@ const WordFormatterPage = () => {
                   </label>
                   <select
                     value={selectedSpec}
-                    onChange={(e) => setSelectedSpec(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // 检查是否选择了保存的规范
+                      if (value.startsWith('saved_')) {
+                        const specId = parseInt(value.replace('saved_', ''), 10);
+                        const savedSpec = savedSpecs.find((s) => s.id === specId);
+                        if (savedSpec) {
+                          handleSelectSavedSpec(savedSpec);
+                          return;
+                        }
+                      }
+                      setSelectedSpec(value);
+                      if (value !== '_custom_') {
+                        setCustomSpecJson(null);
+                      }
+                    }}
                     className="w-full px-3 py-2.5 bg-gray-50 rounded-xl border-none text-[15px] text-black focus:ring-2 focus:ring-purple-500/20"
                   >
-                    {specs.map((spec) => (
-                      <option key={spec} value={spec}>{spec}</option>
-                    ))}
+                    {customSpecJson && (
+                      <option value="_custom_">
+                        ✨ 自定义规范{passedSpecName ? `: ${passedSpecName}` : ''}
+                      </option>
+                    )}
+                    <optgroup label="内置规范">
+                      {specs.map((spec) => (
+                        <option key={spec} value={spec}>{spec}</option>
+                      ))}
+                    </optgroup>
+                    {savedSpecs.length > 0 && (
+                      <optgroup label="保存的规范">
+                        {savedSpecs.map((spec) => (
+                          <option
+                            key={`saved_${spec.id}`}
+                            value={`saved_${spec.id}`}
+                          >
+                            {spec.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
+                  {!hasWorkflowData && (
+                    <div className="mt-2 flex gap-2">
+                      <Link
+                        to="/spec-generator"
+                        className="text-[12px] text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        创建自定义规范
+                      </Link>
+                    </div>
+                  )}
                 </div>
 
                 {/* Toggles */}
@@ -496,19 +661,6 @@ const WordFormatterPage = () => {
                       className="w-4 h-4 text-purple-500 rounded focus:ring-purple-500"
                     />
                     <span className="text-[14px] text-black">目录页</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={useAI}
-                      onChange={(e) => setUseAI(e.target.checked)}
-                      className="w-4 h-4 text-purple-500 rounded focus:ring-purple-500"
-                    />
-                    <span className="text-[14px] text-black flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-                      AI 智能识别
-                    </span>
                   </label>
                 </div>
               </div>

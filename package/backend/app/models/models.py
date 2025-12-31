@@ -21,6 +21,7 @@ class User(Base):
     # 关系
     sessions = relationship("OptimizationSession", back_populates="user")
     prompts = relationship("CustomPrompt", back_populates="user")
+    saved_specs = relationship("SavedSpec", back_populates="user", cascade="all, delete-orphan")
 
 
 class CustomPrompt(Base):
@@ -157,3 +158,19 @@ class SystemSetting(Base):
     key = Column(String(100), unique=True, nullable=False)
     value = Column(String(255), nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class SavedSpec(Base):
+    """用户保存的排版规范表"""
+    __tablename__ = "saved_specs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    name = Column(String(100), nullable=False)
+    description = Column(String(500), nullable=True)
+    spec_json = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # 关系
+    user = relationship("User", back_populates="saved_specs")

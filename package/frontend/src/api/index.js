@@ -141,7 +141,7 @@ export const wordFormatterAPI = {
   // Usage info (shared with polishing)
   getUsage: () => api.get('/word-formatter/usage'),
 
-  // Specs
+  // Built-in Specs
   listSpecs: () => api.get('/word-formatter/specs'),
   getSpecSchema: () => api.get('/word-formatter/specs/schema'),
   validateSpec: (specJson) =>
@@ -152,6 +152,17 @@ export const wordFormatterAPI = {
     api.post('/word-formatter/specs/generate', { requirements }, {
       timeout: 120000, // AI generation may take time
     }),
+
+  // Saved Specs (user's custom specs)
+  saveSpec: (name, specJson, description = null) =>
+    api.post('/word-formatter/specs/save', {
+      name,
+      spec_json: specJson,
+      description,
+    }),
+  listSavedSpecs: () => api.get('/word-formatter/specs/saved'),
+  getSavedSpec: (specId) => api.get(`/word-formatter/specs/saved/${specId}`),
+  deleteSavedSpec: (specId) => api.delete(`/word-formatter/specs/saved/${specId}`),
 
   // Format text
   formatText: (data) =>
@@ -190,6 +201,45 @@ export const wordFormatterAPI = {
     const baseUrl = api.defaults.baseURL || '/api';
     return `${baseUrl}/word-formatter/jobs/${jobId}/stream?card_key=${cardKey}`;
   },
+
+  // Preprocess text
+  preprocessText: (text, options = {}) =>
+    api.post('/word-formatter/preprocess/text', {
+      text,
+      chunk_paragraphs: options.chunkParagraphs || 40,
+      chunk_chars: options.chunkChars || 8000,
+    }, {
+      timeout: 60000,
+    }),
+
+  // Preprocess file
+  preprocessFile: (file, options = {}) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/word-formatter/preprocess/file', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      params: {
+        chunk_paragraphs: options.chunkParagraphs || 40,
+        chunk_chars: options.chunkChars || 8000,
+      },
+      timeout: 120000,
+    });
+  },
+
+  // Preprocess stream URL
+  getPreprocessStreamUrl: (jobId) => {
+    const cardKey = localStorage.getItem('cardKey');
+    const baseUrl = api.defaults.baseURL || '/api';
+    return `${baseUrl}/word-formatter/preprocess/${jobId}/stream?card_key=${cardKey}`;
+  },
+
+  // Get preprocess result
+  getPreprocessResult: (jobId) =>
+    api.get(`/word-formatter/preprocess/${jobId}/result`),
+
+  // Delete preprocess job
+  deletePreprocessJob: (jobId) =>
+    api.delete(`/word-formatter/preprocess/${jobId}`),
 };
 
 export default api;

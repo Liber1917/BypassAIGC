@@ -6,6 +6,8 @@ import WorkspacePage from './pages/WorkspacePage';
 import SessionDetailPage from './pages/SessionDetailPage';
 import AdminDashboard from './pages/AdminDashboard';
 import WordFormatterPage from './pages/WordFormatterPage';
+import SpecGeneratorPage from './pages/SpecGeneratorPage';
+import ArticlePreprocessorPage from './pages/ArticlePreprocessorPage';
 import './index.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -74,6 +76,24 @@ function App() {
           element={
             <ProtectedRoute>
               <WordFormatterPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/spec-generator"
+          element={
+            <ProtectedRoute>
+              <SpecGeneratorPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/article-preprocessor"
+          element={
+            <ProtectedRoute>
+              <ArticlePreprocessorPage />
             </ProtectedRoute>
           }
         />

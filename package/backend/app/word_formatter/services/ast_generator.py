@@ -197,6 +197,244 @@ def parse_markdown_to_ast(text: str) -> DocumentAST:
     return DocumentAST(meta=meta, blocks=blocks2)
 
 
+# ============ Markdown 标记解析器 ============
+
+# 支持的段落类型
+VALID_MARKER_TYPES = frozenset({
+    "title_cn", "title_en",
+    "abstract_cn", "abstract_en",
+    "keywords_cn", "keywords_en",
+    "heading_1", "heading_2", "heading_3",
+    "body",
+    "reference", "acknowledgement",
+    "figure_caption", "table_caption",
+})
+
+# 匹配 <!-- wf:type=xxx --> 格式的标记
+_MARKER_RE = re.compile(r"<!--\s*wf:type\s*=\s*(?P<type>[a-zA-Z0-9_]+)\s*-->")
+
+
+def parse_marked_text_to_ast(text: str) -> DocumentAST:
+    """
+    解析带 <!-- wf:type=xxx --> 标记的文本。
+
+    标记格式：
+        <!-- wf:type=heading_1 -->
+        第一章 绪论
+
+    或同一行：
+        <!-- wf:type=body --> 这是正文内容...
+
+    如果段落没有标记，则使用 identify_paragraph_type() 规则识别。
+
+    Args:
+        text: 带标记的文本
+
+    Returns:
+        DocumentAST 文档结构
+    """
+    meta_dict, body = _parse_front_matter(text)
+    meta = DocumentMeta(
+        title_cn=meta_dict.get("title_cn"),
+        title_en=meta_dict.get("title_en"),
+        author=meta_dict.get("author"),
+        major=meta_dict.get("major"),
+        tutor=meta_dict.get("tutor"),
+        extra={k: v for k, v in meta_dict.items()
+               if k not in {"title_cn", "title_en", "author", "major", "tutor"}},
+    )
+
+    lines = body.splitlines()
+    blocks: List[Any] = []
+    para_buf: List[str] = []
+    pending_type: Optional[str] = None
+
+    def flush_para() -> None:
+        """将缓冲区内容作为一个段落处理"""
+        nonlocal para_buf, pending_type
+        if not para_buf:
+            pending_type = None
+            return
+
+        para_text = "\n".join(para_buf).strip()
+        para_buf = []
+
+        if not para_text:
+            pending_type = None
+            return
+
+        # 确定段落类型：优先使用标记，否则使用规则识别
+        para_type = pending_type if pending_type in VALID_MARKER_TYPES else identify_paragraph_type(para_text)
+        pending_type = None
+
+        # 根据类型生成对应的 AST 块
+        block = _create_block_from_type(para_text, para_type, meta)
+        if block:
+            if isinstance(block, list):
+                blocks.extend(block)
+            else:
+                blocks.append(block)
+
+    for line in lines:
+        stripped = line.strip()
+
+        # 空行触发段落刷新
+        if not stripped:
+            if para_buf:
+                flush_para()
+            continue
+
+        # 分页/分节标记
+        if stripped in {"[[PAGEBREAK]]", "---pagebreak---"}:
+            flush_para()
+            blocks.append(PageBreakBlock())
+            continue
+        if stripped in {"[[SECTIONBREAK]]", "---sectionbreak---"}:
+            flush_para()
+            blocks.append(SectionBreakBlock(kind="next_page"))
+            continue
+
+        # 检查是否包含 wf:type 标记
+        match = _MARKER_RE.search(line)
+        if match:
+            # 发现新标记，先刷新之前的段落
+            if para_buf:
+                flush_para()
+
+            marker_type = match.group("type")
+            pending_type = marker_type if marker_type in VALID_MARKER_TYPES else None
+
+            # 移除标记后检查是否还有内容
+            cleaned = _MARKER_RE.sub("", line).strip()
+            if cleaned:
+                para_buf.append(cleaned)
+            continue
+
+        # 普通行加入缓冲区
+        para_buf.append(line)
+
+    # 处理最后的缓冲区
+    flush_para()
+
+    # 后处理：合并参考文献条目
+    blocks = _merge_bibliography_blocks(blocks)
+
+    return DocumentAST(meta=meta, blocks=blocks)
+
+
+def _create_block_from_type(
+    para_text: str,
+    para_type: str,
+    meta: DocumentMeta
+) -> Any:
+    """
+    根据段落类型创建对应的 AST 块。
+
+    Args:
+        para_text: 段落文本
+        para_type: 段落类型
+        meta: 文档元数据（用于提取标题等）
+
+    Returns:
+        AST 块或块列表
+    """
+    # 标题类型
+    if para_type == "title_cn":
+        meta.title_cn = para_text
+        return HeadingBlock(level=1, text=para_text)
+
+    if para_type == "title_en":
+        meta.title_en = para_text
+        return HeadingBlock(level=1, text=para_text)
+
+    # 摘要类型
+    if para_type in ("abstract_cn", "abstract_en"):
+        is_cn = "cn" in para_type
+        # 检查是否以"摘要"或"Abstract"开头
+        if "摘要" in para_text[:10] or "abstract" in para_text[:20].lower():
+            heading = HeadingBlock(level=1, text="摘要" if is_cn else "Abstract")
+            content = re.sub(r"^(摘\s*要|abstract)[:：\s]*", "", para_text, flags=re.IGNORECASE)
+            if content:
+                return [heading, ParagraphBlock(text=content)]
+            return heading
+        return ParagraphBlock(text=para_text)
+
+    # 关键词类型
+    if para_type in ("keywords_cn", "keywords_en"):
+        is_cn = "cn" in para_type
+        if "关键词" in para_text[:10] or "关键字" in para_text[:10] or "keyword" in para_text[:20].lower():
+            heading = HeadingBlock(level=1, text="关键词" if is_cn else "Key words")
+            content = re.sub(r"^(关键词|关键字|key\s*words)[:：\s]*", "", para_text, flags=re.IGNORECASE)
+            if content:
+                return [heading, ParagraphBlock(text=content)]
+            return heading
+        return ParagraphBlock(text=para_text)
+
+    # 各级标题
+    if para_type == "heading_1":
+        return HeadingBlock(level=1, text=para_text)
+    if para_type == "heading_2":
+        return HeadingBlock(level=2, text=para_text)
+    if para_type == "heading_3":
+        return HeadingBlock(level=3, text=para_text)
+
+    # 参考文献标题
+    if para_type == "reference":
+        if "参考文献" in para_text or "references" in para_text.lower():
+            return HeadingBlock(level=1, text="参考文献")
+        return ParagraphBlock(text=para_text)
+
+    # 致谢标题
+    if para_type == "acknowledgement":
+        if "致谢" in para_text or "谢辞" in para_text or "acknowledgement" in para_text.lower():
+            return HeadingBlock(level=1, text="致谢")
+        return ParagraphBlock(text=para_text)
+
+    # 默认作为正文段落
+    return ParagraphBlock(text=para_text)
+
+
+def _merge_bibliography_blocks(blocks: List[Any]) -> List[Any]:
+    """
+    合并参考文献条目为 BibliographyBlock。
+
+    在"参考文献"标题后，将以 [n] 开头的段落合并为一个 BibliographyBlock。
+    """
+    result: List[Any] = []
+    in_ref = False
+    bib_items: List[str] = []
+
+    for block in blocks:
+        # 检测参考文献标题
+        if isinstance(block, HeadingBlock) and block.level == 1:
+            if block.text.strip() in {"参考文献", "References"}:
+                in_ref = True
+                result.append(block)
+                continue
+
+        # 在参考文献区域内处理
+        if in_ref and isinstance(block, ParagraphBlock):
+            text = (block.text or "").strip()
+            if re.match(r"^\[\d+\]", text):
+                bib_items.append(text)
+                continue
+            # 遇到非参考文献条目，结束收集
+            if bib_items:
+                result.append(BibliographyBlock(items=bib_items))
+                bib_items = []
+            result.append(block)
+            in_ref = False
+            continue
+
+        result.append(block)
+
+    # 处理末尾的参考文献条目
+    if bib_items:
+        result.append(BibliographyBlock(items=bib_items))
+
+    return result
+
+
 _HEADING_NUM_RE = re.compile(r"^\s*(\d+)([\.．](\d+))*([\.．](\d+))*\s+(.+)$")
 
 

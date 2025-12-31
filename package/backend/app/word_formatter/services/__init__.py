@@ -5,9 +5,9 @@ word_formatter 服务层
 from .ast_generator import (
     parse_markdown_to_ast,
     parse_plaintext_heuristic,
-    parse_plaintext_with_ai_types,
-    ai_identify_paragraph_types,
+    parse_marked_text_to_ast,
     identify_paragraph_type,
+    VALID_MARKER_TYPES,
 )
 from .spec_generator import (
     build_generic_spec,
@@ -33,7 +33,6 @@ from .fixer import (
 )
 from .compiler import (
     compile_document,
-    compile_document_with_ai,
     CompileOptions,
     CompileResult,
     CompileProgress,
@@ -44,19 +43,29 @@ from .compiler import (
 from .job_manager import (
     JobManager,
     Job,
+    JobType,
     JobStatus,
     JobProgress,
     get_job_manager,
     init_job_manager,
+)
+from .preprocessor import (
+    ArticlePreprocessor,
+    PreprocessConfig,
+    PreprocessProgress,
+    PreprocessResult,
+    PreprocessPhase,
+    ParagraphInfo,
+    VALID_PARAGRAPH_TYPES,
 )
 
 __all__ = [
     # AST Generator
     "parse_markdown_to_ast",
     "parse_plaintext_heuristic",
-    "parse_plaintext_with_ai_types",
-    "ai_identify_paragraph_types",
+    "parse_marked_text_to_ast",
     "identify_paragraph_type",
+    "VALID_MARKER_TYPES",
     # Spec Generator
     "build_generic_spec",
     "builtin_specs",
@@ -78,7 +87,6 @@ __all__ = [
     "apply_patch",
     # Compiler
     "compile_document",
-    "compile_document_with_ai",
     "CompileOptions",
     "CompileResult",
     "CompileProgress",
@@ -88,8 +96,17 @@ __all__ = [
     # Job Manager
     "JobManager",
     "Job",
+    "JobType",
     "JobStatus",
     "JobProgress",
     "get_job_manager",
     "init_job_manager",
+    # Preprocessor
+    "ArticlePreprocessor",
+    "PreprocessConfig",
+    "PreprocessProgress",
+    "PreprocessResult",
+    "PreprocessPhase",
+    "ParagraphInfo",
+    "VALID_PARAGRAPH_TYPES",
 ]
