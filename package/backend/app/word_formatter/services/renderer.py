@@ -44,6 +44,7 @@ class HeadingNumberer:
 
     支持最多 6 级标题编号，格式如：1, 1.1, 1.1.1, 1.1.1.1, ...
     每当高级标题出现时，自动重置所有低级标题计数器。
+    支持同步到已有编号，避免重复编号。
     """
 
     def __init__(self, max_level: int = 3, separator: str = "."):
@@ -54,6 +55,44 @@ class HeadingNumberer:
     def reset(self) -> None:
         """重置所有计数器。"""
         self._counters = [0] * 6
+
+    def sync_to_existing(self, existing_number: str, level: int) -> None:
+        """同步计数器状态到已有编号。
+
+        当 Markdown 中标题已有编号时，同步内部状态以避免重复。
+
+        Args:
+            existing_number: 已有的编号字符串，如 "1", "2.1", "3.1.2"
+            level: 标题级别 (1-6)
+        """
+        if level < 1 or level > 6:
+            return
+
+        parts = existing_number.split(self._separator)
+        for i, part in enumerate(parts):
+            if i < 6:
+                try:
+                    self._counters[i] = int(part)
+                except ValueError:
+                    pass
+
+        # 重置所有更低级别的计数器
+        for i in range(level, 6):
+            self._counters[i] = 0
+
+    def get_current_number(self, level: int) -> str:
+        """获取指定级别的当前编号（不递增）。
+
+        Args:
+            level: 标题级别 (1-6)
+
+        Returns:
+            当前编号字符串
+        """
+        if level < 1 or level > self._max_level:
+            return ""
+        parts = [str(self._counters[i]) for i in range(level)]
+        return self._separator.join(parts)
 
     def next_number(self, level: int) -> str:
         """获取指定级别的下一个编号。
@@ -270,10 +309,12 @@ def render_docx(
         if isinstance(block, HeadingBlock):
             heading_text = block.text.strip()
 
-            # 清除已有的编号前缀（如 "1 标题" -> "标题"）
+            # 检测已有的编号前缀（如 "1 标题", "1.2 标题"）
             existing_match = _EXISTING_HEADING_NUMBER_RE.match(heading_text)
+            existing_number = None
             if existing_match:
-                heading_text = existing_match.group(2)
+                existing_number = existing_match.group(1)  # 保存已有编号
+                heading_text = existing_match.group(2)     # 提取纯文本
 
             if heading_text in {"摘要"}:
                 current_section = "cn_abstract"
@@ -313,10 +354,16 @@ def render_docx(
                 else:
                     style_id = "H3"
 
-                # 为非前置标题添加编号（使用调整后的级别）
+                # 为非前置标题处理编号
                 if heading_numberer and effective_level <= options.heading_numbering_max_level:
-                    number = heading_numberer.next_number(effective_level)
-                    display_text = f"{number}{options.heading_number_suffix}{heading_text}"
+                    if existing_number:
+                        # Markdown 已有编号：同步状态并直接使用原编号
+                        heading_numberer.sync_to_existing(existing_number, effective_level)
+                        display_text = f"{existing_number}{options.heading_number_suffix}{heading_text}"
+                    else:
+                        # Markdown 无编号：自动生成新编号
+                        number = heading_numberer.next_number(effective_level)
+                        display_text = f"{number}{options.heading_number_suffix}{heading_text}"
                 else:
                     display_text = heading_text
 
