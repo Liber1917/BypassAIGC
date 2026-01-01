@@ -211,6 +211,16 @@ def _patch_styles_xml(styles_root: etree._Element, spec: StyleSpec) -> None:
         jc = _ensure_child(ppr, "w:jc")
         jc.set(_qn("w:val"), _alignment_to_w(s.paragraph.alignment))
 
+        # Fix for justified text excessive character spacing issue:
+        # When Word applies "Justify" alignment to short lines (especially in CJK text),
+        # it stretches character spacing excessively to fill the line width.
+        # Setting snapToGrid="0" and adjustRightInd="0" prevents this behavior.
+        if s.paragraph.alignment == "justify":
+            snap = _ensure_child(ppr, "w:snapToGrid")
+            snap.set(_qn("w:val"), "0")
+            adj = _ensure_child(ppr, "w:adjustRightInd")
+            adj.set(_qn("w:val"), "0")
+
         spacing = _ensure_child(ppr, "w:spacing")
         line, line_rule = _line_to_twips(s.paragraph.line_spacing_rule, s.paragraph.line_spacing)
         spacing.set(_qn("w:line"), str(line))
