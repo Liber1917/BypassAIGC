@@ -39,99 +39,12 @@ def _align_to_docx(align: str):
     }[align]
 
 
-class HeadingNumberer:
-    """多级标题编号管理器。
-
-    支持最多 6 级标题编号，格式如：1, 1.1, 1.1.1, 1.1.1.1, ...
-    每当高级标题出现时，自动重置所有低级标题计数器。
-    支持同步到已有编号，避免重复编号。
-    """
-
-    def __init__(self, max_level: int = 3, separator: str = "."):
-        self._counters = [0] * 6  # 支持 6 级标题
-        self._max_level = min(max_level, 6)
-        self._separator = separator
-
-    def reset(self) -> None:
-        """重置所有计数器。"""
-        self._counters = [0] * 6
-
-    def sync_to_existing(self, existing_number: str, level: int) -> None:
-        """同步计数器状态到已有编号。
-
-        当 Markdown 中标题已有编号时，同步内部状态以避免重复。
-
-        Args:
-            existing_number: 已有的编号字符串，如 "1", "2.1", "3.1.2", "1．2"（含全角点号）
-            level: 标题级别 (1-6)
-        """
-        if level < 1 or level > 6:
-            return
-
-        # 支持半角(.)和全角(．)点号分割
-        parts = re.split(r'[.．]', existing_number)
-        for i, part in enumerate(parts):
-            if i < 6:
-                try:
-                    self._counters[i] = int(part)
-                except ValueError:
-                    pass
-
-        # 重置所有更低级别的计数器
-        for i in range(level, 6):
-            self._counters[i] = 0
-
-    def get_current_number(self, level: int) -> str:
-        """获取指定级别的当前编号（不递增）。
-
-        Args:
-            level: 标题级别 (1-6)
-
-        Returns:
-            当前编号字符串
-        """
-        if level < 1 or level > self._max_level:
-            return ""
-        parts = [str(self._counters[i]) for i in range(level)]
-        return self._separator.join(parts)
-
-    def next_number(self, level: int) -> str:
-        """获取指定级别的下一个编号。
-
-        Args:
-            level: 标题级别 (1-6)
-
-        Returns:
-            格式化的编号字符串，如 "1", "1.1", "1.1.1"
-        """
-        if level < 1 or level > self._max_level:
-            return ""
-
-        idx = level - 1
-
-        # 递增当前级别计数器
-        self._counters[idx] += 1
-
-        # 重置所有更低级别的计数器
-        for i in range(idx + 1, 6):
-            self._counters[i] = 0
-
-        # 构建编号字符串
-        parts = [str(self._counters[i]) for i in range(level)]
-        return self._separator.join(parts)
-
-
 @dataclass
 class RenderOptions:
     include_cover: bool = True
     include_toc: bool = True
     toc_title: str = "目 录"
     toc_levels: int = 3
-    # 标题编号配置
-    enable_heading_numbering: bool = True
-    heading_numbering_max_level: int = 3
-    heading_numbering_separator: str = "."
-    heading_number_suffix: str = " "  # 编号与标题文本之间的分隔符
 
 
 _FRONT_HEADINGS: Set[str] = {
@@ -142,25 +55,6 @@ _FRONT_HEADINGS: Set[str] = {
 _FRONT_ONLY_HEADINGS: Set[str] = {
     "摘要", "关键词", "关键字", "abstract", "key words", "keywords",
 }
-
-# 匹配已有编号的正则表达式：如 "1 标题", "1.2 标题", "1．2 标题"（含全角点号）
-_EXISTING_HEADING_NUMBER_RE = re.compile(r"^(\d+(?:[.．]\d+)*)\s+(.+)$")
-
-
-def _infer_level_from_number(number_str: str) -> int:
-    """从编号字符串推断标题层级。
-
-    Args:
-        number_str: 编号字符串，如 "1", "1.1", "1.2.3", "1．1"（含全角点号）
-
-    Returns:
-        推断的层级数（1, 2, 3...）
-    """
-    if not number_str:
-        return 1
-    # 同时统计半角点号(.)和全角点号(．)
-    dot_count = number_str.count('.') + number_str.count('．')
-    return dot_count + 1
 
 
 def _is_front_heading(text: str) -> bool:
@@ -316,22 +210,9 @@ def render_docx(
     # 检测标题级别偏移（支持 ## 作为一级标题等情况）
     heading_level_offset = _detect_heading_level_offset(ast)
 
-    # 初始化标题编号器
-    heading_numberer = HeadingNumberer(
-        max_level=options.heading_numbering_max_level,
-        separator=options.heading_numbering_separator,
-    ) if options.enable_heading_numbering else None
-
     for block in ast.blocks:
         if isinstance(block, HeadingBlock):
             heading_text = block.text.strip()
-
-            # 检测已有的编号前缀（如 "1 标题", "1.2 标题"）
-            existing_match = _EXISTING_HEADING_NUMBER_RE.match(heading_text)
-            existing_number = None
-            if existing_match:
-                existing_number = existing_match.group(1)  # 保存已有编号
-                heading_text = existing_match.group(2)     # 提取纯文本
 
             if heading_text in {"摘要"}:
                 current_section = "cn_abstract"
@@ -359,13 +240,8 @@ def render_docx(
                 style_id = "FrontHeading"
                 display_text = heading_text
             else:
-                # 确定有效层级：优先使用编号推断的层级，否则使用 Markdown 语法层级
-                if existing_number:
-                    # 从编号推断层级（如 "1.1" -> 层级 2）
-                    effective_level = _infer_level_from_number(existing_number)
-                else:
-                    # 应用级别偏移（支持 ## 作为一级标题等情况）
-                    effective_level = max(1, block.level - heading_level_offset)
+                # 应用级别偏移（支持 ## 作为一级标题等情况）
+                effective_level = max(1, block.level - heading_level_offset)
 
                 # 限制最大层级为 3（模板通常只支持 H1-H3）
                 effective_level = min(effective_level, 3)
@@ -379,18 +255,8 @@ def render_docx(
                 else:
                     style_id = "H3"
 
-                # 为非前置标题处理编号
-                if heading_numberer and effective_level <= options.heading_numbering_max_level:
-                    if existing_number:
-                        # Markdown 已有编号：同步状态并直接使用原编号
-                        heading_numberer.sync_to_existing(existing_number, effective_level)
-                        display_text = f"{existing_number}{options.heading_number_suffix}{heading_text}"
-                    else:
-                        # Markdown 无编号：自动生成新编号
-                        number = heading_numberer.next_number(effective_level)
-                        display_text = f"{number}{options.heading_number_suffix}{heading_text}"
-                else:
-                    display_text = heading_text
+                # 直接使用原始标题文本，不添加编号
+                display_text = heading_text
 
             p = doc.add_paragraph(display_text)
             if style_id in doc.styles:

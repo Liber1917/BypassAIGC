@@ -66,9 +66,6 @@ class FormatRequest(BaseModel):
     include_cover: bool = True
     include_toc: bool = True
     toc_title: str = "目 录"
-    # 标题编号配置
-    enable_heading_numbering: bool = True
-    heading_numbering_max_level: int = 3
 
 
 class FormatFileRequest(BaseModel):
@@ -79,9 +76,6 @@ class FormatFileRequest(BaseModel):
     include_cover: bool = True
     include_toc: bool = True
     toc_title: str = "目 录"
-    # 标题编号配置
-    enable_heading_numbering: bool = True
-    heading_numbering_max_level: int = 3
 
 
 class GenerateSpecRequest(BaseModel):
@@ -399,8 +393,6 @@ async def format_text(
         include_cover=request.include_cover,
         include_toc=request.include_toc,
         toc_title=request.toc_title,
-        enable_heading_numbering=request.enable_heading_numbering,
-        heading_numbering_max_level=request.heading_numbering_max_level,
     )
 
     # Create job
@@ -435,8 +427,6 @@ async def format_file(
     include_cover: bool = Query(True),
     include_toc: bool = Query(True),
     toc_title: str = Query("目 录"),
-    enable_heading_numbering: bool = Query(True),
-    heading_numbering_max_level: int = Query(3),
     background_tasks: BackgroundTasks = None,
     db: Session = Depends(get_db)
 ):
@@ -510,8 +500,6 @@ async def format_file(
         include_cover=include_cover,
         include_toc=include_toc,
         toc_title=toc_title,
-        enable_heading_numbering=enable_heading_numbering,
-        heading_numbering_max_level=heading_numbering_max_level,
     )
 
     # Create job

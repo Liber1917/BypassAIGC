@@ -27,8 +27,6 @@ const WordFormatterPage = () => {
   const [customSpecJson, setCustomSpecJson] = useState(null);
   const [includeCover, setIncludeCover] = useState(true);
   const [includeToc, setIncludeToc] = useState(true);
-  const [enableHeadingNumbering, setEnableHeadingNumbering] = useState(true);
-  const [headingNumberingMaxLevel, setHeadingNumberingMaxLevel] = useState(3);
   const [jobs, setJobs] = useState([]);
   const [activeJob, setActiveJob] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -226,8 +224,6 @@ const WordFormatterPage = () => {
           spec_json: specJsonToUse,
           include_cover: includeCover,
           include_toc: includeToc,
-          enable_heading_numbering: enableHeadingNumbering,
-          heading_numbering_max_level: headingNumberingMaxLevel,
         });
       } else {
         response = await wordFormatterAPI.formatText({
@@ -236,8 +232,6 @@ const WordFormatterPage = () => {
           spec_json: specJsonToUse,
           include_cover: includeCover,
           include_toc: includeToc,
-          enable_heading_numbering: enableHeadingNumbering,
-          heading_numbering_max_level: headingNumberingMaxLevel,
         });
       }
 
@@ -843,31 +837,6 @@ Deep Learning; Image Recognition; Convolutional Neural Network
                     />
                     <span className="text-[14px] text-black">目录页</span>
                   </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={enableHeadingNumbering}
-                      onChange={(e) => setEnableHeadingNumbering(e.target.checked)}
-                      className="w-4 h-4 text-purple-500 rounded focus:ring-purple-500"
-                    />
-                    <span className="text-[14px] text-black">标题编号</span>
-                  </label>
-
-                  {enableHeadingNumbering && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[14px] text-gray-500">编号级别:</span>
-                      <select
-                        value={headingNumberingMaxLevel}
-                        onChange={(e) => setHeadingNumberingMaxLevel(Number(e.target.value))}
-                        className="text-[14px] border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      >
-                        <option value={1}>1 级</option>
-                        <option value={2}>2 级</option>
-                        <option value={3}>3 级（推荐）</option>
-                      </select>
-                    </div>
-                  )}
                 </div>
               </div>
 
