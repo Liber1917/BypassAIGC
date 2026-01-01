@@ -50,6 +50,20 @@ def _clear_paragraph_runs(p) -> None:
             pass
 
 
+def _clear_paragraph_numbering(p) -> None:
+    """清除段落的自动编号格式。
+
+    Word 的标题样式可能关联了 Outline Numbering，
+    这会导致标题前出现额外的 1, 2, 3 等序号。
+    通过移除 numPr 元素可以清除这些自动编号。
+    """
+    pPr = p._p.find(qn("w:pPr"))
+    if pPr is not None:
+        numPr = pPr.find(qn("w:numPr"))
+        if numPr is not None:
+            pPr.remove(numPr)
+
+
 def _apply_inline_style(run, inline_type: str) -> None:
     """根据 Inline 类型应用对应的样式到 run。"""
     if inline_type == "bold":
@@ -312,6 +326,8 @@ def render_docx(
                 p.style = doc.styles[style_id]
             elif "Body" in doc.styles:
                 p.style = doc.styles["Body"]
+            # 清除 Word 样式可能关联的自动编号
+            _clear_paragraph_numbering(p)
             continue
 
         if isinstance(block, ParagraphBlock):
