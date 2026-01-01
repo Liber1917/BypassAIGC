@@ -33,12 +33,6 @@ from ..models.ast import (
 
 _FRONT_MATTER_RE = re.compile(r"^\s*---\s*$", re.M)
 
-# 中文列表序号正则：匹配 "1）" "1、" "（1）" 等格式
-_LIST_PAREN_RE = re.compile(r"^(\s*)(\d+)[）\)]\s*")  # 1）或 1)
-_LIST_DUNHAO_RE = re.compile(r"^(\s*)(\d+)、\s*")    # 1、
-_LIST_PARENS_RE = re.compile(r"^(\s*)[（\(](\d+)[）\)]\s*")  # （1）或 (1)
-_CODE_FENCE_RE = re.compile(r"^\s*```")
-
 
 def _parse_front_matter(text: str) -> Tuple[Dict[str, str], str]:
     """
@@ -63,37 +57,6 @@ def _parse_front_matter(text: str) -> Tuple[Dict[str, str], str]:
         i += 1
     # no closing ---; treat as normal text
     return {}, text
-
-
-def _normalize_markdown_lists(text: str) -> str:
-    """
-    规范化中文列表序号为标准 Markdown 有序列表格式。
-
-    将以下格式转换为标准 Markdown 列表：
-    - "1）" -> "1. "
-    - "1、" -> "1. "
-    - "（1）" -> "1. "
-    """
-    lines = text.splitlines()
-    out: List[str] = []
-    in_fence = False
-
-    for line in lines:
-        # 检测代码块边界，避免在代码块内进行替换
-        if _CODE_FENCE_RE.match(line):
-            in_fence = not in_fence
-            out.append(line)
-            continue
-
-        if not in_fence:
-            # 按优先级依次替换中文列表序号
-            line = _LIST_PAREN_RE.sub(r"\1\2. ", line)
-            line = _LIST_DUNHAO_RE.sub(r"\1\2. ", line)
-            line = _LIST_PARENS_RE.sub(r"\1\2. ", line)
-
-        out.append(line)
-
-    return "\n".join(out)
 
 
 def _inlines_from_children(children: List[Dict[str, Any]]) -> List[Inline]:
@@ -157,8 +120,9 @@ def _inlines_from_table_cell(cell: Any) -> List[Inline]:
 
 def parse_markdown_to_ast(text: str) -> DocumentAST:
     meta_dict, body = _parse_front_matter(text)
-    # 规范化中文列表序号
-    body = _normalize_markdown_lists(body)
+    # 注意：已移除 _normalize_markdown_lists 调用
+    # 该函数会将 "6.2"、"1）" 等标题编号误转换为列表项，
+    # 导致 Word 输出中产生重复的递增序号
     meta = DocumentMeta(
         title_cn=meta_dict.get("title_cn"),
         title_en=meta_dict.get("title_en"),
