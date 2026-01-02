@@ -16,8 +16,6 @@ from ..models.stylespec import (
     FontMapping,
     ForbiddenDirectFormatting,
     MarginMM,
-    NumberingLevel,
-    NumberingSpec,
     PageNumberingSpec,
     PageSpec,
     StructureSpec,
@@ -356,17 +354,6 @@ def build_generic_spec(first_line_indent: bool = True) -> StyleSpec:
         line_spacing_rule="1.5"
     )
 
-    # 编号规范
-    numbering = NumberingSpec(
-        abstract_num_id=1,
-        num_id=1,
-        levels=[
-            NumberingLevel(level=0, style_id="H1", start=1, fmt="decimal", lvl_text="%1", suffix="space"),
-            NumberingLevel(level=1, style_id="H2", start=1, fmt="decimal", lvl_text="%1．%2", suffix="space"),
-            NumberingLevel(level=2, style_id="H3", start=1, fmt="decimal", lvl_text="%1．%2．%3", suffix="space"),
-        ],
-    )
-
     # 结构规范
     structure = StructureSpec(
         required_h1_titles=["摘要", "Abstract", "引言", "致谢", "参考文献"],
@@ -389,7 +376,7 @@ def build_generic_spec(first_line_indent: bool = True) -> StyleSpec:
         },
         page=page,
         styles=styles,
-        numbering=numbering,
+        numbering=None,
         structure=structure,
         forbidden_direct_formatting=ForbiddenDirectFormatting(),
         page_numbering=PageNumberingSpec(

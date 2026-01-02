@@ -493,7 +493,7 @@ const WordFormatterPage = () => {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-blue-500 mt-0.5">•</span>
-                      <span><strong>前置章节：</strong>摘要、Abstract、关键词、致谢、参考文献等会自动识别，不添加编号</span>
+                      <span><strong>前置章节：</strong>摘要、Abstract、关键词、致谢、参考文献等会自动识别并使用专用样式</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-blue-500 mt-0.5">•</span>
