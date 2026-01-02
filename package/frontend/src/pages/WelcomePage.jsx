@@ -84,7 +84,7 @@ const WelcomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col items-center justify-center p-4 sm:p-6 relative">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex flex-col items-center justify-center p-4 sm:p-6 relative">
       {/* Admin button in top-left with Apple frosted glass style */}
       <button
         onClick={() => navigate('/admin')}
@@ -96,7 +96,7 @@ const WelcomePage = () => {
 
       <div className="max-w-md w-full space-y-8">
         {!showWarning ? (
-          <div className="bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 p-8 space-y-8">
+          <div className="bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 p-8 space-y-8 animate-fade-in-up">
             {/* Logo/标题区域 */}
             <div className="text-center space-y-4">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-ios-blue rounded-[22px] shadow-lg mb-2">
@@ -156,7 +156,7 @@ const WelcomePage = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 p-8 space-y-6">
+          <div className="bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 p-8 space-y-6 animate-scale-in">
             {/* 图标和标题 */}
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-ios-orange rounded-[18px] shadow-md mb-4">

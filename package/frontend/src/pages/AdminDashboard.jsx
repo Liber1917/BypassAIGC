@@ -301,8 +301,8 @@ const AdminDashboard = () => {
   // Login Page
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 animate-fade-in-up">
           <div className="flex items-center justify-center mb-8">
             <div className="bg-blue-600 p-3 rounded-full">
               <Shield className="w-8 h-8 text-white" />
@@ -423,8 +423,8 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab('sessions')}
               className={`group relative flex items-center gap-2.5 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ease-out ${
                 activeTab === 'sessions'
-                  ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/30 scale-105'
-                  : 'bg-white text-gray-600 hover:text-purple-600 hover:bg-purple-50 hover:shadow-md border border-gray-200'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105'
+                  : 'bg-white text-gray-600 hover:text-blue-600 hover:bg-blue-50 hover:shadow-md border border-gray-200'
               }`}
             >
               <Activity className={`w-5 h-5 transition-transform duration-300 ${
@@ -543,13 +543,13 @@ const AdminDashboard = () => {
                         <p className="text-sm font-medium text-gray-500 mb-1">总会话数</p>
                         <p className="text-3xl font-bold text-gray-900 tracking-tight">{statistics.sessions.total}</p>
                         <div className="flex items-center gap-1 mt-2">
-                          <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
                             {statistics.sessions.today} 今日
                           </span>
                         </div>
                       </div>
-                      <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
-                        <Database className="w-6 h-6 text-purple-600" />
+                      <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                        <Database className="w-6 h-6 text-blue-600" />
                       </div>
                     </div>
                   </div>
@@ -561,8 +561,8 @@ const AdminDashboard = () => {
                     {/* Total Characters Processed */}
                     <div className="bg-white rounded-2xl shadow-ios p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center">
-                          <BarChart3 className="w-5 h-5 text-indigo-600" />
+                        <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                          <BarChart3 className="w-5 h-5 text-blue-600" />
                         </div>
                         <span className="text-xs font-medium text-gray-400">累计</span>
                       </div>
@@ -623,8 +623,8 @@ const AdminDashboard = () => {
                     {/* Total Word Formatter Jobs */}
                     <div className="bg-white rounded-2xl shadow-ios p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-indigo-600" />
+                        <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-blue-600" />
                         </div>
                       </div>
                       <p className="text-sm font-medium text-gray-500 mb-1">排版任务</p>
@@ -1070,8 +1070,8 @@ const AdminDashboard = () => {
                 <p className="text-2xl font-bold text-green-600">{userDetails.statistics.completed_sessions}</p>
                 <p className="text-xs text-gray-600 mt-1">完成会话</p>
               </div>
-              <div className="bg-purple-50 rounded-lg p-4 text-center">
-                <p className="text-2xl font-bold text-purple-600">{userDetails.statistics.total_segments}</p>
+              <div className="bg-blue-50 rounded-lg p-4 text-center">
+                <p className="text-2xl font-bold text-blue-600">{userDetails.statistics.total_segments}</p>
                 <p className="text-xs text-gray-600 mt-1">处理段落</p>
               </div>
               <div className="bg-orange-50 rounded-lg p-4 text-center">

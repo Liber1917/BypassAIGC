@@ -346,7 +346,7 @@ const WordFormatterPage = () => {
                   <span className="text-sm">返回格式检测</span>
                 </Link>
               )}
-              <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <h1 className="text-[17px] font-semibold text-black tracking-tight">
@@ -389,7 +389,7 @@ const WordFormatterPage = () => {
             <ArrowRight className="w-4 h-4" />
             <span className="px-3 py-1 bg-gray-100 rounded-full">2. 格式检测</span>
             <ArrowRight className="w-4 h-4" />
-            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
+            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
               3. 生成 Word
             </span>
           </div>
@@ -411,9 +411,9 @@ const WordFormatterPage = () => {
               </div>
             )}
             {passedSpecJson && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 border border-purple-200 rounded-lg text-sm">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                <span className="text-purple-700">使用自定义规范: {passedSpecName || '自定义'}</span>
+              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+                <Sparkles className="w-4 h-4 text-blue-600" />
+                <span className="text-blue-700">使用自定义规范: {passedSpecName || '自定义'}</span>
               </div>
             )}
           </div>
@@ -421,31 +421,31 @@ const WordFormatterPage = () => {
 
         {/* Quick Start Guide - Only show when no workflow data */}
         {!hasWorkflowData && (
-          <div className="mb-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-5 border border-purple-100">
-            <h3 className="text-[15px] font-semibold text-purple-900 mb-3">推荐工作流程</h3>
+          <div className="mb-6 bg-gradient-to-r from-blue-50 to-blue-50 rounded-2xl p-5 border border-blue-100">
+            <h3 className="text-[15px] font-semibold text-blue-900 mb-3">推荐工作流程</h3>
             <div className="flex items-center gap-4 text-sm">
               <Link
                 to="/spec-generator"
-                className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors"
               >
-                <span className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                <span className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold">1</span>
                 生成排版规范
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 to="/format-checker"
-                className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors"
               >
-                <span className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                <span className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold">2</span>
                 格式检测
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <span className="flex items-center gap-2 px-4 py-2 bg-purple-100 rounded-lg text-purple-700 font-medium">
-                <span className="w-6 h-6 bg-purple-200 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+              <span className="flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-lg text-blue-700 font-medium">
+                <span className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center text-xs font-bold">3</span>
                 生成 Word
               </span>
             </div>
-            <p className="mt-3 text-[13px] text-purple-600">
+            <p className="mt-3 text-[13px] text-blue-600">
               或者直接在下方上传文件/输入文本，使用内置规范快速排版
             </p>
           </div>
@@ -630,10 +630,10 @@ Deep Learning; Image Recognition; Convolutional Neural Network
 
             {/* Info Card */}
             <div className="bg-white rounded-2xl shadow-ios overflow-hidden">
-              <div className="p-4 flex items-start gap-3 bg-purple-50/50">
-                <Info className="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" />
+              <div className="p-4 flex items-start gap-3 bg-blue-50/50">
+                <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                 <div className="text-[15px] text-black">
-                  <p className="font-semibold mb-1 text-purple-600">AI Word 精确排版</p>
+                  <p className="font-semibold mb-1 text-blue-600">AI Word 精确排版</p>
                   <p className="text-gray-700 leading-relaxed">
                     根据学术论文规范自动排版文档。
                     支持 .docx、.txt、.md 文件或直接输入文本。
@@ -685,9 +685,9 @@ Deep Learning; Image Recognition; Convolutional Neural Network
                   onDrop={handleDrop}
                   className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${
                     dragActive
-                      ? 'border-purple-500 bg-purple-50'
+                      ? 'border-blue-500 bg-blue-50'
                       : file
-                      ? 'border-purple-300 bg-purple-50/50'
+                      ? 'border-blue-300 bg-blue-50/50'
                       : 'border-gray-200 bg-gray-50 hover:border-gray-300'
                   }`}
                 >
@@ -701,8 +701,8 @@ Deep Learning; Image Recognition; Convolutional Neural Network
 
                   {file ? (
                     <div className="space-y-3">
-                      <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto">
-                        <FileUp className="w-6 h-6 text-purple-500" />
+                      <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto">
+                        <FileUp className="w-6 h-6 text-blue-500" />
                       </div>
                       <div>
                         <p className="font-medium text-black">{file.name}</p>
@@ -726,7 +726,7 @@ Deep Learning; Image Recognition; Convolutional Neural Network
                       </div>
                       <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="px-4 py-2 bg-purple-500 text-white rounded-lg text-[14px] font-medium hover:bg-purple-600 transition-colors"
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg text-[14px] font-medium hover:bg-blue-600 transition-colors"
                       >
                         浏览文件
                       </button>
@@ -745,7 +745,7 @@ Deep Learning; Image Recognition; Convolutional Neural Network
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     placeholder="在此粘贴文档内容..."
-                    className="w-full h-64 px-4 py-3 bg-gray-50 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500/20 transition-all text-[16px] leading-relaxed text-black placeholder-gray-400 border-none outline-none resize-none"
+                    className="w-full h-64 px-4 py-3 bg-gray-50 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 transition-all text-[16px] leading-relaxed text-black placeholder-gray-400 border-none outline-none resize-none"
                   />
                   <div className="absolute bottom-3 right-3 text-[12px] text-ios-gray bg-white/80 px-2 py-1 rounded-md backdrop-blur-sm">
                     {text.length} 字符
@@ -778,7 +778,7 @@ Deep Learning; Image Recognition; Convolutional Neural Network
                         setCustomSpecJson(null);
                       }
                     }}
-                    className="w-full px-3 py-2.5 bg-gray-50 rounded-xl border-none text-[15px] text-black focus:ring-2 focus:ring-purple-500/20"
+                    className="w-full px-3 py-2.5 bg-gray-50 rounded-xl border-none text-[15px] text-black focus:ring-2 focus:ring-blue-500/20"
                   >
                     {customSpecJson && (
                       <option value="_custom_">
@@ -807,7 +807,7 @@ Deep Learning; Image Recognition; Convolutional Neural Network
                     <div className="mt-2 flex gap-2">
                       <Link
                         to="/spec-generator"
-                        className="text-[12px] text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                        className="text-[12px] text-blue-600 hover:text-blue-700 flex items-center gap-1"
                       >
                         <Sparkles className="w-3 h-3" />
                         创建自定义规范
@@ -823,7 +823,7 @@ Deep Learning; Image Recognition; Convolutional Neural Network
                       type="checkbox"
                       checked={includeCover}
                       onChange={(e) => setIncludeCover(e.target.checked)}
-                      className="w-4 h-4 text-purple-500 rounded focus:ring-purple-500"
+                      className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500"
                     />
                     <span className="text-[14px] text-black">封面页</span>
                   </label>
@@ -833,7 +833,7 @@ Deep Learning; Image Recognition; Convolutional Neural Network
                       type="checkbox"
                       checked={includeToc}
                       onChange={(e) => setIncludeToc(e.target.checked)}
-                      className="w-4 h-4 text-purple-500 rounded focus:ring-purple-500"
+                      className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500"
                     />
                     <span className="text-[14px] text-black">目录页</span>
                   </label>
@@ -845,7 +845,7 @@ Deep Learning; Image Recognition; Convolutional Neural Network
                 <button
                   onClick={handleSubmit}
                   disabled={(inputMode === 'text' && !text.trim()) || (inputMode === 'file' && !file) || activeJob || isSubmitting}
-                  className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-8 rounded-xl transition-all active:scale-[0.98] shadow-sm text-[17px]"
+                  className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-8 rounded-xl transition-all active:scale-[0.98] shadow-sm text-[17px]"
                 >
                   {isSubmitting ? (
                     <>
@@ -864,13 +864,13 @@ Deep Learning; Image Recognition; Convolutional Neural Network
 
             {/* Active Job Progress */}
             {activeJob && jobs.find(j => j.job_id === activeJob) && (
-              <div className="bg-white rounded-2xl shadow-ios p-5 border border-purple-100">
+              <div className="bg-white rounded-2xl shadow-ios p-5 border border-blue-100">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-[17px] font-bold text-black flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                     处理中
                   </h2>
-                  <span className="text-[13px] font-medium px-2 py-1 bg-purple-50 text-purple-600 rounded-md">
+                  <span className="text-[13px] font-medium px-2 py-1 bg-blue-50 text-blue-600 rounded-md">
                     {jobs.find(j => j.job_id === activeJob)?.phase || '运行中'}
                   </span>
                 </div>
@@ -884,13 +884,13 @@ Deep Learning; Image Recognition; Convolutional Neural Network
                           <span className="text-ios-gray">
                             {job?.message || '正在处理文档...'}
                           </span>
-                          <span className="text-purple-600">
+                          <span className="text-blue-600">
                             {((job?.progress || 0) * 100).toFixed(0)}%
                           </span>
                         </div>
                         <div className="w-full bg-gray-100 rounded-full h-2">
                           <div
-                            className="bg-purple-500 h-2 rounded-full transition-all duration-500 ease-out"
+                            className="bg-blue-500 h-2 rounded-full transition-all duration-500 ease-out"
                             style={{ width: `${(job?.progress || 0) * 100}%` }}
                           />
                         </div>
@@ -940,14 +940,14 @@ Deep Learning; Image Recognition; Convolutional Neural Network
                             <CheckCircle className="w-4 h-4 text-ios-green" />
                           )}
                           {(job.status === 'running' || job.status === 'pending') && (
-                            <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
+                            <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
                           )}
                           {job.status === 'failed' && (
                             <AlertCircle className="w-4 h-4 text-ios-red" />
                           )}
                           <span className={`text-[13px] font-medium ${
                             job.status === 'completed' ? 'text-black' :
-                            job.status === 'running' || job.status === 'pending' ? 'text-purple-600' :
+                            job.status === 'running' || job.status === 'pending' ? 'text-blue-600' :
                             job.status === 'failed' ? 'text-ios-red' : 'text-ios-gray'
                           }`}>
                             {job.status === 'completed' && '已完成'}
@@ -969,7 +969,7 @@ Deep Learning; Image Recognition; Convolutional Neural Network
                       {(job.status === 'running' || job.status === 'pending') && (
                         <div className="w-full bg-gray-100 rounded-full h-1 mb-1">
                           <div
-                            className="bg-purple-500 h-1 rounded-full"
+                            className="bg-blue-500 h-1 rounded-full"
                             style={{ width: `${(job.progress || 0) * 100}%` }}
                           />
                         </div>
@@ -980,7 +980,7 @@ Deep Learning; Image Recognition; Convolutional Neural Network
                         {job.status === 'completed' && (
                           <button
                             onClick={() => handleDownload(job)}
-                            className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 flex items-center gap-1"
+                            className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1"
                           >
                             <Download className="w-3 h-3" />
                             下载

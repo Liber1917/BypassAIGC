@@ -11,19 +11,19 @@ import { wordFormatterAPI } from '../api';
 
 // Paragraph type configuration with icons and colors
 const PARAGRAPH_TYPES = {
-  title: { label: '标题', icon: Type, color: 'bg-purple-100 text-purple-700 border-purple-300' },
+  title: { label: '标题', icon: Type, color: 'bg-blue-100 text-blue-700 border-blue-300' },
   heading1: { label: '一级标题', icon: Hash, color: 'bg-blue-100 text-blue-700 border-blue-300' },
   heading2: { label: '二级标题', icon: Hash, color: 'bg-cyan-100 text-cyan-700 border-cyan-300' },
   heading3: { label: '三级标题', icon: Hash, color: 'bg-teal-100 text-teal-700 border-teal-300' },
   abstract: { label: '摘要', icon: BookOpen, color: 'bg-amber-100 text-amber-700 border-amber-300' },
   keywords: { label: '关键词', icon: List, color: 'bg-orange-100 text-orange-700 border-orange-300' },
   body: { label: '正文', icon: FileText, color: 'bg-gray-100 text-gray-700 border-gray-300' },
-  quote: { label: '引用', icon: Quote, color: 'bg-indigo-100 text-indigo-700 border-indigo-300' },
+  quote: { label: '引用', icon: Quote, color: 'bg-blue-100 text-blue-700 border-blue-300' },
   list_item: { label: '列表项', icon: List, color: 'bg-green-100 text-green-700 border-green-300' },
   table: { label: '表格', icon: Table, color: 'bg-pink-100 text-pink-700 border-pink-300' },
   figure: { label: '图片', icon: Image, color: 'bg-rose-100 text-rose-700 border-rose-300' },
   code: { label: '代码', icon: Code, color: 'bg-slate-100 text-slate-700 border-slate-300' },
-  reference: { label: '参考文献', icon: BookOpen, color: 'bg-violet-100 text-violet-700 border-violet-300' },
+  reference: { label: '参考文献', icon: BookOpen, color: 'bg-teal-100 text-teal-700 border-teal-300' },
 };
 
 const ArticlePreprocessorPage = () => {
@@ -432,7 +432,7 @@ const ArticlePreprocessorPage = () => {
       return (
         <div className="bg-white rounded-lg border p-4 mb-4">
           <div className="flex items-center gap-2">
-            <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
+            <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
             <span className="text-sm font-medium text-gray-700">正在初始化预处理任务...</span>
           </div>
         </div>
@@ -468,7 +468,7 @@ const ArticlePreprocessorPage = () => {
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div
-            className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
             style={{ width: `${percentage}%` }}
           />
         </div>
@@ -500,7 +500,7 @@ const ArticlePreprocessorPage = () => {
               </div>
             )}
             {selectedSpec && (
-              <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm">
+              <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm">
                 <CheckCircle className="w-4 h-4" />
                 已选规范: {specName || '自定义'}
               </div>
@@ -514,7 +514,7 @@ const ArticlePreprocessorPage = () => {
         <div className="mb-6 flex items-center justify-center gap-2 text-sm text-gray-500">
           <span className="px-3 py-1 bg-gray-100 rounded-full">1. 生成规范</span>
           <ArrowRight className="w-4 h-4" />
-          <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
+          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
             2. 文章预处理
           </span>
           <ArrowRight className="w-4 h-4" />
@@ -531,7 +531,7 @@ const ArticlePreprocessorPage = () => {
                   onClick={() => setInputMode('file')}
                   className={`flex-1 py-2 px-4 rounded-lg border transition-colors ${
                     inputMode === 'file'
-                      ? 'bg-purple-50 border-purple-300 text-purple-700'
+                      ? 'bg-blue-50 border-blue-300 text-blue-700'
                       : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
                   }`}
                 >
@@ -542,7 +542,7 @@ const ArticlePreprocessorPage = () => {
                   onClick={() => setInputMode('text')}
                   className={`flex-1 py-2 px-4 rounded-lg border transition-colors ${
                     inputMode === 'text'
-                      ? 'bg-purple-50 border-purple-300 text-purple-700'
+                      ? 'bg-blue-50 border-blue-300 text-blue-700'
                       : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
                   }`}
                 >
@@ -559,7 +559,7 @@ const ArticlePreprocessorPage = () => {
                   onDrop={handleDrop}
                   className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                     dragActive
-                      ? 'border-purple-400 bg-purple-50'
+                      ? 'border-blue-400 bg-blue-50'
                       : 'border-gray-300 hover:border-gray-400'
                   }`}
                 >
@@ -572,7 +572,7 @@ const ArticlePreprocessorPage = () => {
                   />
                   {file ? (
                     <div className="flex items-center justify-center gap-3">
-                      <FileUp className="w-8 h-8 text-purple-500" />
+                      <FileUp className="w-8 h-8 text-blue-500" />
                       <div className="text-left">
                         <div className="font-medium text-gray-900">{file.name}</div>
                         <div className="text-sm text-gray-500">
@@ -595,7 +595,7 @@ const ArticlePreprocessorPage = () => {
                       <p className="text-gray-600 mb-2">拖拽文件到这里，或点击选择</p>
                       <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                       >
                         选择文件
                       </button>
@@ -608,7 +608,7 @@ const ArticlePreprocessorPage = () => {
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   placeholder="在此粘贴您的文章内容..."
-                  className="w-full h-64 p-3 border rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full h-64 p-3 border rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               )}
             </div>
@@ -637,7 +637,7 @@ const ArticlePreprocessorPage = () => {
                       onChange={(e) => setChunkParagraphs(parseInt(e.target.value) || 40)}
                       min={10}
                       max={100}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                     <p className="text-xs text-gray-500 mt-1">建议 30-50，过大可能导致 AI 识别不准</p>
                   </div>
@@ -651,7 +651,7 @@ const ArticlePreprocessorPage = () => {
                       onChange={(e) => setChunkChars(parseInt(e.target.value) || 8000)}
                       min={2000}
                       max={20000}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                     <p className="text-xs text-gray-500 mt-1">建议 6000-10000，防止 AI 上下文溢出</p>
                   </div>
@@ -664,7 +664,7 @@ const ArticlePreprocessorPage = () => {
               <button
                 onClick={handleStartPreprocess}
                 disabled={isSubmitting || jobStatus === 'running'}
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting || jobStatus === 'running' ? (
                   <>
@@ -702,7 +702,7 @@ const ArticlePreprocessorPage = () => {
                     <button
                       onClick={() => setViewMode('list')}
                       className={`p-2 rounded ${
-                        viewMode === 'list' ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:bg-gray-100'
+                        viewMode === 'list' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100'
                       }`}
                       title="列表视图"
                     >
@@ -711,7 +711,7 @@ const ArticlePreprocessorPage = () => {
                     <button
                       onClick={() => setViewMode('raw')}
                       className={`p-2 rounded ${
-                        viewMode === 'raw' ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:bg-gray-100'
+                        viewMode === 'raw' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100'
                       }`}
                       title="原始文本"
                     >
@@ -746,7 +746,7 @@ const ArticlePreprocessorPage = () => {
                 {/* Statistics */}
                 <div className="grid grid-cols-3 gap-4 text-center text-sm mb-4">
                   <div className="bg-gray-50 rounded p-2">
-                    <div className="text-2xl font-semibold text-purple-600">{paragraphs.length}</div>
+                    <div className="text-2xl font-semibold text-blue-600">{paragraphs.length}</div>
                     <div className="text-gray-500">总段落</div>
                   </div>
                   <div className="bg-gray-50 rounded p-2">
@@ -797,7 +797,7 @@ const ArticlePreprocessorPage = () => {
                   </button>
                   <button
                     onClick={handleGoToFormat}
-                    className="flex-1 flex items-center justify-center gap-2 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                    className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                   >
                     下一步: 生成 Word
                     <ArrowRight className="w-4 h-4" />
@@ -827,7 +827,7 @@ const ArticlePreprocessorPage = () => {
                 <p className="text-gray-500 text-sm mb-4">请检查文件格式或网络连接后重试</p>
                 <button
                   onClick={handleReset}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   重新开始
                 </button>

@@ -161,8 +161,8 @@ const ConfigManager = ({ adminToken }) => {
       {/* 增强模型配置 */}
       <div className="bg-white rounded-2xl shadow-ios p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
-            <Cpu className="w-5 h-5 text-purple-600" />
+          <div className="w-10 h-10 bg-cyan-50 rounded-xl flex items-center justify-center">
+            <Cpu className="w-5 h-5 text-cyan-600" />
           </div>
           <h3 className="text-lg font-bold text-gray-900">论文增强模型配置</h3>
         </div>
@@ -263,8 +263,8 @@ const ConfigManager = ({ adminToken }) => {
       {/* 思考模式配置 */}
       <div className="bg-white rounded-2xl shadow-ios p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-            <Brain className="w-5 h-5 text-indigo-600" />
+          <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+            <Brain className="w-5 h-5 text-blue-600" />
           </div>
           <h3 className="text-lg font-bold text-gray-900">思考模式配置</h3>
         </div>
@@ -286,9 +286,9 @@ const ConfigManager = ({ adminToken }) => {
                 ...formData,
                 THINKING_MODE_ENABLED: !formData.THINKING_MODE_ENABLED
               })}
-              className={`relative w-12 h-7 rounded-full transition-colors ${
+              className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${
                 formData.THINKING_MODE_ENABLED
-                  ? 'bg-indigo-600'
+                  ? 'bg-blue-600'
                   : 'bg-gray-200'
               }`}
             >
@@ -309,7 +309,7 @@ const ConfigManager = ({ adminToken }) => {
               value={formData.THINKING_MODE_EFFORT}
               onChange={(e) => setFormData({...formData, THINKING_MODE_EFFORT: e.target.value})}
               disabled={!formData.THINKING_MODE_ENABLED}
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="none">无推理 (最低延迟)</option>
               <option value="low">轻度推理</option>

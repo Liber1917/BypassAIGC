@@ -132,7 +132,7 @@ const SessionMonitor = ({ adminToken }) => {
       {/* 头部 */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <Activity className="w-6 h-6 text-purple-600" />
+          <Activity className="w-6 h-6 text-blue-600" />
           <h3 className="text-xl font-semibold text-gray-800">会话监控</h3>
         </div>
         <div className="flex items-center gap-3">
@@ -153,7 +153,7 @@ const SessionMonitor = ({ adminToken }) => {
               onClick={() => setViewMode('history')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 viewMode === 'history' 
-                  ? 'bg-white text-purple-600 shadow-sm' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -278,8 +278,8 @@ const SessionMonitor = ({ adminToken }) => {
                 <p className="text-sm font-medium text-gray-500 mb-1">总会话数</p>
                 <p className="text-3xl font-bold text-gray-900 tracking-tight">{historySessions.length}</p>
               </div>
-              <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                <BarChart3 className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </div>
@@ -317,7 +317,7 @@ const SessionMonitor = ({ adminToken }) => {
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <button
                         onClick={() => fetchUserSessions(session.user_id, session.card_key)}
-                        className="flex items-center gap-2 px-3 py-1 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded-lg transition-colors text-sm font-medium"
+                        className="flex items-center gap-2 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg transition-colors text-sm font-medium"
                       >
                         <User className="w-4 h-4" />
                         {session.card_key}
@@ -342,7 +342,7 @@ const SessionMonitor = ({ adminToken }) => {
                         </button>
                       )}
                       {session.processing_mode && (
-                        <span className="px-2 py-1 text-xs font-medium rounded bg-indigo-100 text-indigo-800">
+                        <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">
                           {session.processing_mode === 'paper_polish' ? '论文润色' :
                            session.processing_mode === 'paper_polish_enhance' ? '论文润色+增强' :
                            session.processing_mode === 'emotion_polish' ? '感情文章润色' :
@@ -414,7 +414,7 @@ const SessionMonitor = ({ adminToken }) => {
           <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <User className="w-6 h-6 text-purple-600" />
+                <User className="w-6 h-6 text-blue-600" />
                 <h3 className="text-xl font-bold text-gray-800">
                   用户会话历史: {selectedUser.card_key}
                 </h3>
@@ -450,7 +450,7 @@ const SessionMonitor = ({ adminToken }) => {
                           {getStatusText(session.status)}
                         </span>
                         {session.processing_mode && (
-                          <span className="px-2 py-1 text-xs font-medium rounded bg-indigo-100 text-indigo-800">
+                          <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">
                             {session.processing_mode === 'paper_polish' ? '论文润色' :
                              session.processing_mode === 'paper_polish_enhance' ? '论文润色+增强' :
                              session.processing_mode === 'emotion_polish' ? '感情文章润色' :
@@ -481,9 +481,9 @@ const SessionMonitor = ({ adminToken }) => {
                         </div>
                       )}
                       {session.enhanced_char_count != null && (
-                        <div className="bg-purple-50 rounded-lg p-2">
-                          <p className="text-xs text-purple-600 mb-1">增强字符</p>
-                          <p className="text-lg font-bold text-purple-700">{session.enhanced_char_count.toLocaleString()}</p>
+                        <div className="bg-blue-50 rounded-lg p-2">
+                          <p className="text-xs text-blue-600 mb-1">增强字符</p>
+                          <p className="text-lg font-bold text-blue-700">{session.enhanced_char_count.toLocaleString()}</p>
                         </div>
                       )}
                     </div>

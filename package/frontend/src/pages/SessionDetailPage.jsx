@@ -357,7 +357,7 @@ const SessionDetailPage = () => {
                         <span className="bg-blue-50 text-ios-blue text-[11px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">
                           段落 {change.segment_index + 1}
                         </span>
-                        <span className="bg-purple-50 text-ios-purple text-[11px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">
+                        <span className="bg-blue-50 text-ios-blue text-[11px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">
                           {change.stage === 'polish' ? '润色' :
                            change.stage === 'emotion_polish' ? '感情润色' :
                            '增强'}

@@ -249,7 +249,7 @@ const SpecGeneratorPage = () => {
               <div className="space-y-2">
                 {Object.entries(spec.paragraph_styles).map(([key, style]) => (
                   <div key={key} className="text-sm border-b border-gray-200 pb-2 last:border-0">
-                    <div className="font-medium text-purple-600">{key}</div>
+                    <div className="font-medium text-blue-600">{key}</div>
                     <div className="grid grid-cols-3 gap-1 text-gray-600 mt-1">
                       <span>字体: {style.font_name_cn || style.font_name_en || '-'}</span>
                       <span>字号: {style.font_size_pt || '-'}pt</span>
@@ -291,7 +291,7 @@ const SpecGeneratorPage = () => {
             <tbody className="divide-y divide-gray-200">
               {Object.entries(styles).map(([key, style]) => (
                 <tr key={key} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 font-medium text-purple-600">{key}</td>
+                  <td className="px-3 py-2 font-medium text-blue-600">{key}</td>
                   <td className="px-3 py-2">{style.font_name_cn || '-'}</td>
                   <td className="px-3 py-2">{style.font_name_en || '-'}</td>
                   <td className="px-3 py-2">{style.font_size_pt || '-'}pt</td>
@@ -346,7 +346,7 @@ const SpecGeneratorPage = () => {
                   <button
                     key={template.id}
                     onClick={() => handleSelectTemplate(template)}
-                    className="text-left p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                    className="text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
                   >
                     <div className="font-medium text-gray-900">{template.name}</div>
                     <div className="text-sm text-gray-500">{template.description}</div>
@@ -362,7 +362,7 @@ const SpecGeneratorPage = () => {
                 value={requirements}
                 onChange={(e) => setRequirements(e.target.value)}
                 placeholder="请详细描述您的排版要求，例如：标题使用什么字体、字号，正文行距多少，页边距设置等..."
-                className="w-full h-40 p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full h-40 p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <div className="flex justify-between items-center mt-3">
                 <span className="text-sm text-gray-500">{requirements.length} 字符</span>
@@ -376,7 +376,7 @@ const SpecGeneratorPage = () => {
                   <button
                     onClick={handleGenerate}
                     disabled={isGenerating || !requirements.trim()}
-                    className="px-4 py-1.5 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+                    className="px-4 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
                   >
                     {isGenerating ? (
                       <>
@@ -452,7 +452,7 @@ const SpecGeneratorPage = () => {
                       value={specName}
                       onChange={(e) => setSpecName(e.target.value)}
                       placeholder="输入规范名称"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div>
@@ -464,7 +464,7 @@ const SpecGeneratorPage = () => {
                       value={specDescription}
                       onChange={(e) => setSpecDescription(e.target.value)}
                       placeholder="可选描述"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -483,7 +483,7 @@ const SpecGeneratorPage = () => {
                         onClick={() => setViewMode('structure')}
                         className={`px-2 py-1 text-sm rounded-md transition-colors ${
                           viewMode === 'structure'
-                            ? 'bg-white text-purple-600 shadow-sm'
+                            ? 'bg-white text-blue-600 shadow-sm'
                             : 'text-gray-600'
                         }`}
                       >
@@ -493,7 +493,7 @@ const SpecGeneratorPage = () => {
                         onClick={() => setViewMode('table')}
                         className={`px-2 py-1 text-sm rounded-md transition-colors ${
                           viewMode === 'table'
-                            ? 'bg-white text-purple-600 shadow-sm'
+                            ? 'bg-white text-blue-600 shadow-sm'
                             : 'text-gray-600'
                         }`}
                       >
@@ -503,7 +503,7 @@ const SpecGeneratorPage = () => {
                         onClick={() => setViewMode('json')}
                         className={`px-2 py-1 text-sm rounded-md transition-colors ${
                           viewMode === 'json'
-                            ? 'bg-white text-purple-600 shadow-sm'
+                            ? 'bg-white text-blue-600 shadow-sm'
                             : 'text-gray-600'
                         }`}
                       >
@@ -564,7 +564,7 @@ const SpecGeneratorPage = () => {
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex-1 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                    className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
                   >
                     {isSaving ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
