@@ -108,7 +108,8 @@ class AIService:
             # 核心互斥逻辑：reasoning_effort 与 temperature 互斥
             use_reasoning = reasoning_effort and reasoning_effort != "none"
             if use_reasoning:
-                api_params["reasoning_effort"] = reasoning_effort
+                # 使用 extra_body 传递 reasoning_effort 以兼容旧版 SDK 和第三方 API
+                api_params["extra_body"] = {"reasoning_effort": reasoning_effort}
             else:
                 api_params["temperature"] = temperature
 
@@ -136,8 +137,8 @@ class AIService:
                 if use_reasoning:
                     if self._enable_logging:
                         print(f"[STREAM REQUEST] reasoning_effort 调用失败，尝试降级: {str(api_error)}", flush=True)
-                    # 移除 reasoning_effort，添加 temperature
-                    api_params.pop("reasoning_effort", None)
+                    # 移除 extra_body（包含 reasoning_effort），添加 temperature
+                    api_params.pop("extra_body", None)
                     api_params["temperature"] = temperature
                     stream = await self.client.chat.completions.create(**api_params)
                 else:
@@ -236,7 +237,8 @@ class AIService:
             # 核心互斥逻辑：reasoning_effort 与 temperature 互斥
             use_reasoning = reasoning_effort and reasoning_effort != "none"
             if use_reasoning:
-                api_params["reasoning_effort"] = reasoning_effort
+                # 使用 extra_body 传递 reasoning_effort 以兼容旧版 SDK 和第三方 API
+                api_params["extra_body"] = {"reasoning_effort": reasoning_effort}
             else:
                 api_params["temperature"] = temperature
 
@@ -268,8 +270,8 @@ class AIService:
                 if use_reasoning:
                     if self._enable_logging:
                         print(f"[AI REQUEST] reasoning_effort 调用失败，尝试降级: {str(api_error)}", flush=True)
-                    # 移除 reasoning_effort，添加 temperature
-                    api_params.pop("reasoning_effort", None)
+                    # 移除 extra_body（包含 reasoning_effort），添加 temperature
+                    api_params.pop("extra_body", None)
                     api_params["temperature"] = temperature
                     response = await self.client.chat.completions.create(**api_params)
                 else:
