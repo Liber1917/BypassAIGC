@@ -748,6 +748,10 @@ async def get_config(_: str = Depends(get_admin_from_token)) -> Dict[str, Any]:
             "api_key": settings.COMPRESSION_API_KEY or "",
             "base_url": settings.COMPRESSION_BASE_URL or "",
         },
+        "thinking": {
+            "enabled": settings.THINKING_MODE_ENABLED,
+            "effort": settings.THINKING_MODE_EFFORT,
+        },
         "system": {
             "max_concurrent_users": settings.MAX_CONCURRENT_USERS,
             "history_compression_threshold": settings.HISTORY_COMPRESSION_THRESHOLD,
