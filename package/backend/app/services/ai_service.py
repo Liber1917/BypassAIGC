@@ -132,7 +132,10 @@ class AIService:
                 api_key=self.api_key,
                 base_url=self.base_url,
                 timeout=60.0,
-                max_retries=2  # 添加重试机制
+                max_retries=2,
+                default_headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                }
             )
             
             # 启用所有API请求的日志记录
