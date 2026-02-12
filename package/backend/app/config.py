@@ -27,6 +27,10 @@ def get_default_database_url():
 
 
 class Settings(BaseSettings):
+    # 服务器配置
+    SERVER_HOST: str = "0.0.0.0"
+    SERVER_PORT: int = 9800
+
     # 数据库配置 - 默认使用 exe 同目录
     DATABASE_URL: str = get_default_database_url()
     

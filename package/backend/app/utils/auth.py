@@ -19,7 +19,7 @@ def generate_card_key(length: int = 16, prefix: str = "") -> str:
     return random_part
 
 
-def generate_access_link(card_key: str, base_url: str = "http://localhost:3000") -> str:
+def generate_access_link(card_key: str, base_url: str = "http://localhost:9800") -> str:
     """生成访问链接"""
     return f"{base_url}/access/{card_key}"
 

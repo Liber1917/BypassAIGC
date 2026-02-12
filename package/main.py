@@ -426,6 +426,10 @@ def create_sample_env():
         sample_content = """# AI 学术写作助手配置文件
 # 请根据实际情况修改以下配置
 
+# 服务器配置
+SERVER_HOST=0.0.0.0
+SERVER_PORT=9800
+
 # 数据库配置 (SQLite 默认在 exe 同目录)
 # DATABASE_URL=sqlite:///./ai_polish.db
 
@@ -479,8 +483,8 @@ SEGMENT_SKIP_THRESHOLD=15
 
 def main():
     """主入口函数"""
-    port = 8000
-    host = "127.0.0.1"
+    port = settings.SERVER_PORT
+    host = settings.SERVER_HOST
     
     print("\n" + "="*60)
     print("🚀 AI 学术写作助手 - 启动中...")

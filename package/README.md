@@ -71,7 +71,7 @@ cd package
    - 管理员密码（ADMIN_PASSWORD）
    - JWT 密钥（SECRET_KEY）
 5. 再次运行程序
-6. 程序会自动打开浏览器访问 http://localhost:8000
+6. 程序会自动打开浏览器访问 http://localhost:9800
 
 ### 配置文件说明
 
@@ -79,9 +79,9 @@ cd package
 
 ### 访问地址
 
-- 用户界面: http://localhost:8000
-- 管理后台: http://localhost:8000/admin
-- API 文档: http://localhost:8000/docs
+- 用户界面: http://localhost:9800
+- 管理后台: http://localhost:9800/admin
+- API 文档: http://localhost:9800/docs
 
 ## 与原项目的区别
 
