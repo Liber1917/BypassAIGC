@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   FileText, History, LogOut, Play,
-  Users, Clock, AlertCircle, CheckCircle, Trash2, Info, FileType
+  Users, Clock, AlertCircle, CheckCircle, Trash2, Info
 } from 'lucide-react';
 import { optimizationAPI } from '../api';
 
@@ -64,7 +64,7 @@ const SessionItem = memo(({ session, activeSession, onView, onDelete, onRetry })
       </div>
 
       <p className="text-[13px] text-ios-gray leading-snug line-clamp-2 mb-2 pr-6">
-        {session.original_text?.substring(0, 100)}...
+        {session.preview_text || '暂无预览'}
       </p>
 
       {session.status === 'processing' && (
@@ -300,16 +300,6 @@ const WorkspacePage = () => {
             </div>
             
             <div className="flex items-center gap-4">
-              {/* 功能切换 */}
-              <Link
-                to="/word-formatter"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-[13px] font-medium text-gray-700 transition-colors"
-                title="Word 精确排版"
-              >
-                <FileType className="w-4 h-4" />
-                <span className="hidden sm:inline">Word 排版</span>
-              </Link>
-
               {/* 队列状态 */}
               {queueStatus && (
                 <div className="flex items-center gap-3 text-[13px]">
@@ -354,7 +344,6 @@ const WorkspacePage = () => {
                   <p className="font-semibold mb-1 text-ios-blue">当前模式说明</p>
                   <p className="text-gray-700 leading-relaxed">
                     {processingMode === 'paper_polish' && '仅进行论文润色，提升文本的学术性和表达质量。'}
-                    {processingMode === 'paper_enhance' && '直接进行原创性增强，跳过润色阶段，适合已经润色过的文本。'}
                     {processingMode === 'paper_polish_enhance' && '先进行论文润色，然后自动进行原创性增强，两阶段处理。'}
                     {processingMode === 'emotion_polish' && '专为感情文章设计，生成更自然、更具人性化的表达。'}
                   </p>
@@ -377,8 +366,7 @@ const WorkspacePage = () => {
                 <div className="space-y-3">
                   {[
                     { id: 'paper_polish', title: '论文润色', desc: '提升学术表达质量' },
-                    { id: 'paper_enhance', title: '论文增强', desc: '直接提升原创性' },
-                    { id: 'paper_polish_enhance', title: '润色 + 增强', desc: '两阶段完整处理' },
+                    { id: 'paper_polish_enhance', title: '润色 + 增强', desc: '提升原创性与学术水平' },
                     { id: 'emotion_polish', title: '感情文章润色', desc: '自然、人性化表达' }
                   ].map((mode) => (
                     <label

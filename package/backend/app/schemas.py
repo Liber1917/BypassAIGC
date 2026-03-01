@@ -68,6 +68,7 @@ class SessionResponse(BaseModel):
     current_position: int
     total_segments: int
     original_char_count: int = 0
+    preview_text: Optional[str] = None
     error_message: Optional[str] = None
     processing_mode: str = 'paper_polish_enhance'
     created_at: datetime
