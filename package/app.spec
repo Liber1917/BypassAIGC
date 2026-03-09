@@ -33,6 +33,7 @@ hidden_imports = [
     'jose',
     'openai',
     'httpx',
+    'socksio',
     'aiofiles',
     'sse_starlette',
     'redis',
