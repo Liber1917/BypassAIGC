@@ -44,6 +44,13 @@ hidden_imports = [
     'lxml',
     'lxml.etree',
     'lxml._elementpath',
+    # pkg_resources / setuptools 依赖 (Linux 必需)
+    'jaraco',
+    'jaraco.text',
+    'jaraco.functools',
+    'jaraco.context',
+    'pkg_resources',
+    'pkg_resources.extern',
 ]
 
 # 收集 uvicorn 和其他依赖的子模块
@@ -57,6 +64,9 @@ hidden_imports += collect_submodules('starlette')
 hidden_imports += collect_submodules('mistune')
 hidden_imports += collect_submodules('docx')
 hidden_imports += collect_submodules('lxml')
+# pkg_resources / jaraco 子模块 (Linux 必需)
+hidden_imports += collect_submodules('jaraco')
+hidden_imports += collect_submodules('pkg_resources')
 
 # 分析主入口文件
 a = Analysis(

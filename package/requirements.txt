@@ -26,3 +26,8 @@ lxml>=4.9.0
 
 # 打包工具
 pyinstaller==6.3.0
+
+# PyInstaller 打包 Linux 需要显式包含 (pkg_resources 依赖)
+jaraco.text
+jaraco.functools
+jaraco.context

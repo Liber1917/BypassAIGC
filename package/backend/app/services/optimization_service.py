@@ -345,6 +345,12 @@ class OptimizationService:
                 # 更新历史会话 - 只添加AI的回复内容
                 history.append({"role": "assistant", "content": output_text})
                 total_chars += count_chinese_characters(output_text)
+
+                # API 请求间隔等待，避免触发 RATE_LIMIT
+                request_interval = max(settings.API_REQUEST_INTERVAL, 0)
+                if request_interval > 0 and idx < len(segments) - 1:
+                    print(f"[RATE LIMIT] 等待 {request_interval}s 后处理下一段落...", flush=True)
+                    await asyncio.sleep(request_interval)
                 
                 # 检查是否需要压缩历史 - 基于字符数阈值
                 if total_chars > settings.HISTORY_COMPRESSION_THRESHOLD:

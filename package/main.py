@@ -458,6 +458,9 @@ EMOTION_BASE_URL=https://api.openai.com/v1
 # 并发配置
 MAX_CONCURRENT_USERS=7
 
+# API 请求间隔 (秒，每段落处理后等待，避免触发频率限制)
+API_REQUEST_INTERVAL=6
+
 # 会话压缩配置
 HISTORY_COMPRESSION_THRESHOLD=2000
 COMPRESSION_MODEL=gemini-2.5-pro

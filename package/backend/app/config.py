@@ -73,6 +73,9 @@ class Settings(BaseSettings):
     # 流式输出配置
     USE_STREAMING: bool = False  # 默认使用非流式模式，避免被API阻止
 
+    # API 请求间隔（秒），用于避免触发 RATE_LIMIT
+    API_REQUEST_INTERVAL: int = 6
+
     # 思考模式配置
     THINKING_MODE_ENABLED: bool = True  # 默认启用思考模式
     THINKING_MODE_EFFORT: str = "high"  # 思考强度: none, low, medium, high, xhigh
