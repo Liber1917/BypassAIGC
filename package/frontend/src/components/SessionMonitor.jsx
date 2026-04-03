@@ -344,6 +344,7 @@ const SessionMonitor = ({ adminToken }) => {
                       {session.processing_mode && (
                         <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">
                           {session.processing_mode === 'paper_polish' ? '论文润色' :
+                           session.processing_mode === 'paper_enhance' ? '论文增强' :
                            session.processing_mode === 'paper_polish_enhance' ? '论文润色+增强' :
                            session.processing_mode === 'emotion_polish' ? '感情文章润色' :
                            session.processing_mode}
@@ -452,6 +453,7 @@ const SessionMonitor = ({ adminToken }) => {
                         {session.processing_mode && (
                           <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">
                             {session.processing_mode === 'paper_polish' ? '论文润色' :
+                             session.processing_mode === 'paper_enhance' ? '论文增强' :
                              session.processing_mode === 'paper_polish_enhance' ? '论文润色+增强' :
                              session.processing_mode === 'emotion_polish' ? '感情文章润色' :
                              session.processing_mode}
