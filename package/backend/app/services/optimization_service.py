@@ -4,8 +4,8 @@ from typing import List, Dict, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 from app.models.models import (
-    OptimizationSession, OptimizationSegment, 
-    SessionHistory, ChangeLog
+    OptimizationSession, OptimizationSegment,
+    SessionHistory, ChangeLog, CustomPrompt,
 )
 from app.services.ai_service import (
     AIService, split_text_into_segments,
@@ -408,13 +408,33 @@ class OptimizationService:
             )
     
     def _get_prompt(self, stage: str) -> str:
-        """获取提示词"""
+        """获取提示词：emotion_polish 仍用内置；polish/enhance 优先读当前用户 is_default 的 CustomPrompt。"""
+        if stage == "emotion_polish":
+            return get_emotion_polish_prompt()
+
+        db_stage = "polish" if stage == "polish" else "enhance"
+        uid = self.session_obj.user_id
+        if uid is not None:
+            row = (
+                self.db.query(CustomPrompt)
+                .filter(
+                    CustomPrompt.user_id == uid,
+                    CustomPrompt.stage == db_stage,
+                    CustomPrompt.is_active.is_(True),
+                    CustomPrompt.is_default.is_(True),
+                )
+                .first()
+            )
+            if row and (row.content or "").strip():
+                print(
+                    f"[INFO] 使用用户默认提示词 stage={db_stage} prompt_id={row.id} name={row.name!r}",
+                    flush=True,
+                )
+                return row.content.strip()
+
         if stage == "polish":
             return get_default_polish_prompt()
-        elif stage == "emotion_polish":
-            return get_emotion_polish_prompt()
-        else:  # enhance
-            return get_default_enhance_prompt()
+        return get_default_enhance_prompt()
     
     async def _compress_history(
         self, 
