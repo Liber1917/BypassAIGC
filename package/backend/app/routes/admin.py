@@ -18,11 +18,19 @@ from app.models.models import (
     User,
 )
 from app.schemas import (
+    AdminUserCreate,
     CardKeyGenerate,
     CardKeyResponse,
     DatabaseUpdateRequest,
     UserResponse,
     UserUsageUpdate,
+)
+from app.utils.auth import (
+    create_access_token,
+    generate_access_link,
+    generate_card_key,
+    hash_password,
+    verify_token,
 )
 from app.services.concurrency import concurrency_manager
 from app.word_formatter.services.job_manager import get_job_manager
@@ -192,6 +200,38 @@ async def batch_generate_keys(
 @router.get("/users", response_model=List[UserResponse])
 async def get_all_users(_: str = Depends(get_admin_from_token), db: Session = Depends(get_db)) -> List[User]:
     return db.query(User).order_by(User.created_at.desc()).all()
+
+
+@router.post("/users/create")
+async def create_users(
+    users: List[AdminUserCreate],
+    _: str = Depends(get_admin_from_token),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """批量创建用户（用户名+密码）"""
+    created = []
+    skipped = []
+    for u in users:
+        existing = db.query(User).filter(User.username == u.username).first()
+        if existing:
+            skipped.append(u.username)
+            continue
+        user = User(
+            username=u.username,
+            password_hash=hash_password(u.password),
+            display_name=u.display_name,
+            is_active=True,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        created.append({
+            "id": user.id,
+            "username": user.username,
+            "display_name": user.display_name,
+            "created_at": user.created_at,
+        })
+    return {"created": created, "skipped": skipped, "total_created": len(created)}
 
 
 @router.patch("/users/{user_id}/toggle")
@@ -754,8 +794,8 @@ async def get_config(_: str = Depends(get_admin_from_token)) -> Dict[str, Any]:
         },
         "system": {
             "max_concurrent_users": settings.MAX_CONCURRENT_USERS,
+            "max_concurrent_per_user": settings.MAX_CONCURRENT_PER_USER,
             "history_compression_threshold": settings.HISTORY_COMPRESSION_THRESHOLD,
-            "default_usage_limit": settings.DEFAULT_USAGE_LIMIT,
             "segment_skip_threshold": settings.SEGMENT_SKIP_THRESHOLD,
             "use_streaming": settings.USE_STREAMING,
             "max_upload_file_size_mb": settings.MAX_UPLOAD_FILE_SIZE_MB,
