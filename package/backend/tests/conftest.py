@@ -7,7 +7,7 @@ TEST_DB_DIR = Path(tempfile.mkdtemp(prefix="bypass_aigc_test_"))
 TEST_DB_PATH = TEST_DB_DIR / "test.db"
 
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
-os.environ["SECRET_KEY"] = "test-secret-key-for-testing"
+os.environ["SECRET_KEY"] = "test-secret-key-for-development-only"
 os.environ["ADMIN_PASSWORD"] = "admin123"
 os.environ["ADMIN_USERNAME"] = "admin"
 os.environ["POLISH_MODEL"] = "gpt-4"
