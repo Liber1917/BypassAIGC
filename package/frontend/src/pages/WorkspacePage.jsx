@@ -123,12 +123,11 @@ const WorkspacePage = () => {
       const response = await optimizationAPI.listSessions();
       setSessions(response.data);
 
-      // 查找正在处理的会话
-      const processing = response.data.find(
+      const active = response.data.filter(
         s => s.status === 'processing' || s.status === 'queued'
       );
-      if (processing) {
-        setActiveSession(processing.session_id);
+      if (active.length > 0) {
+        setActiveSession(active[0].session_id);
       }
     } catch (error) {
       console.error('加载会话失败:', error);
@@ -230,7 +229,8 @@ const WorkspacePage = () => {
   }, [text, processingMode, isSubmitting, loadSessions]);
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('cardKey');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('username');
     navigate('/');
   }, [navigate]);
 
@@ -415,7 +415,7 @@ const WorkspacePage = () => {
               <div className="mt-5 flex justify-end">
                 <button
                   onClick={handleStartOptimization}
-                  disabled={!text.trim() || activeSession || isSubmitting}
+                  disabled={!text.trim() || isSubmitting}
                   className="flex items-center gap-2 bg-ios-blue hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-8 rounded-xl transition-all active:scale-[0.98] shadow-sm text-[17px]"
                 >
                   {isSubmitting ? (
@@ -434,65 +434,49 @@ const WorkspacePage = () => {
             </div>
 
             {/* 活跃会话进度 */}
-            {activeSession && currentActiveSessionData && (
-              <div className="bg-white rounded-2xl shadow-ios p-5 border border-blue-100">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-[17px] font-bold text-black flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-ios-blue animate-pulse" />
-                    正在处理
-                  </h2>
-                  <span className="text-[13px] font-medium px-2 py-1 bg-blue-50 text-ios-blue rounded-md">
-                    进行中
-                  </span>
-                </div>
+            {(() => {
+              const activeSessions = sessions.filter(
+                s => s.status === 'processing' || s.status === 'queued'
+              );
+              if (activeSessions.length === 0) return null;
 
-                {(() => {
-                  const session = currentActiveSessionData;
-                  const getStageName = (stage) => {
-                    if (stage === 'polish') return '论文润色';
-                    if (stage === 'emotion_polish') return '感情文章润色';
-                    if (stage === 'enhance') return '原创性增强';
-                    return stage;
-                  };
-                  return (
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex justify-between text-[13px] mb-2 font-medium">
-                          <span className="text-ios-gray">
-                            当前阶段: <span className="text-black">{getStageName(session.current_stage)}</span>
-                          </span>
-                          <span className="text-ios-blue">
-                            {session.progress.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-100 rounded-full h-2">
-                          <div
-                            className="bg-ios-blue h-2 rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(0,122,255,0.3)]"
-                            style={{ width: `${session.progress}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center text-[13px]">
+              return activeSessions.map(session => (
+                <div key={session.session_id} className="bg-white rounded-2xl shadow-ios p-5 border border-blue-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-[15px] font-bold text-black flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-ios-blue animate-pulse" />
+                      正在处理
+                    </h2>
+                    <span className="text-[13px] font-medium px-2 py-1 bg-blue-50 text-ios-blue rounded-md">
+                      {session.status === 'queued' ? '排队中' : '进行中'}
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between text-[13px] mb-2 font-medium">
                         <span className="text-ios-gray">
-                          进度: <span className="font-medium text-black">{session.current_position + 1}</span> / {session.total_segments} 段
+                          阶段: <span className="text-black">{session.current_stage === 'polish' ? '润色' : session.current_stage === 'enhance' ? '增强' : session.current_stage}</span>
                         </span>
-
-                        {session.status === 'queued' && queueStatus?.your_position && (
-                          <div className="flex items-center gap-1.5 text-ios-orange">
-                            <Clock className="w-3.5 h-3.5" />
-                            <span>
-                              排队第 {queueStatus.your_position} 位
-                              (~{Math.ceil(queueStatus.estimated_wait_time / 60)}分)
-                            </span>
-                          </div>
-                        )}
+                        <span className="text-ios-blue">
+                          {session.progress.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2">
+                        <div
+                          className="bg-ios-blue h-2 rounded-full transition-all duration-500 ease-out"
+                          style={{ width: `${session.progress}%` }}
+                        />
                       </div>
                     </div>
-                  );
-                })()}
-              </div>
-            )}
+                    <div className="flex justify-between items-center text-[13px]">
+                      <span className="text-ios-gray">
+                        进度: <span className="font-medium text-black">{session.current_position + 1}</span> / {session.total_segments} 段
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
 
           {/* 右侧 - 历史会话 */}
