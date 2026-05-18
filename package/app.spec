@@ -29,7 +29,7 @@ hidden_imports = [
     'sqlalchemy.dialects.sqlite',
     'pydantic',
     'pydantic_settings',
-    'passlib.handlers.bcrypt',
+    'bcrypt',
     'jose',
     'openai',
     'httpx',
