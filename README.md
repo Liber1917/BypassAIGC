@@ -6,17 +6,17 @@
 <img width="2103" height="1337" alt="图片" src="https://github.com/user-attachments/assets/523da9c2-899d-4739-932e-84af881a1dfd" />
 
 
- ## 效果
- 
+## 优化效果展示
+
 示例一
 <img width="1785" height="654" alt="图片" src="https://github.com/user-attachments/assets/4c96dc66-aa43-432e-90a0-57f7d89dd0f2" />
 修改优化后
- <img width="1946" height="672" alt="图片" src="https://github.com/user-attachments/assets/a46f5d62-30ec-4930-b558-18bd24d0e86f" />
+<img width="1946" height="672" alt="图片" src="https://github.com/user-attachments/assets/a46f5d62-30ec-4930-b558-18bd24d0e86f" />
 例二
 <img width="1958" height="662" alt="图片" src="https://github.com/user-attachments/assets/de871360-c045-46ec-8e96-7b3c100af147" />
 修改优化后
 <img width="1772" height="665" alt="图片" src="https://github.com/user-attachments/assets/3fd2d052-d62e-41fd-8215-fbc375e0d0e5" />
-gptzero
+**GPTZero 检测结果对比**
 <img width="2224" height="547" alt="图片" src="https://github.com/user-attachments/assets/b5daf3cb-6e3f-401c-bdc2-a9a88dcbdb35" />
 
 ## 快速开始
@@ -40,18 +40,6 @@ gptzero
 5. 访问管理后台（默认用户名 `admin`，密码见 `.env`）添加用户账户
 
 > 💡 提示：数据库文件 `ai_polish.db` 和配置文件 `.env` 都保存在可执行文件同目录，方便备份和迁移。
-
-### 运行测试
-
-```bash
-# 无 API 测试（认证、会话、并发、数据隔离 — 39 个用例）
-cd package/backend && python -m pytest tests/ -k "not integration" -v
-
-# 集成测试（需要真实 API 凭证 — 11 个用例）
-BYPASS_AIGC_API_KEY=sk-xxx BYPASS_AIGC_BASE_URL=https://your-proxy/v1 \
-BYPASS_AIGC_MODEL=gemini-2.5-pro \
-python -m pytest tests/test_integration.py -v -s
-```
 
 ### 配置文件说明
 
@@ -113,7 +101,7 @@ SEGMENT_SKIP_THRESHOLD=15
 ```
 
 **注意:** 
-- 推荐使用 Google Gemini 2.5 Pro 模型以获得更好的性能和成本效益
+- 推荐使用 Google Gemini 2.5 Pro 模型以获得更好的效果和更低的 API 费用
 - BASE_URL 使用 OpenAI 兼容格式，需要配置支持 OpenAI API 格式的代理服务
 - **流式输出默认禁用**：为避免某些 API（如 Gemini）返回阻止错误，系统默认使用非流式模式。可在管理后台的"系统配置"中切换
 
@@ -127,21 +115,21 @@ SEGMENT_SKIP_THRESHOLD=15
 
 - **双阶段优化**: 论文润色 + 学术增强
 - **智能分段**: 自动识别标题，跳过短段落
-- **使用限制**: JWT 账户系统，管理员批量创建用户，用户数据隔离
+- **用户管理**: 基于 JWT 的账户系统，支持管理员批量创建用户，用户间数据完全隔离
 - **并发控制**: 全局并发 + 每用户并发限制，支持同一用户并行提交多个任务
 - **实时配置**: 修改配置无需重启服务
 - **数据管理**: 可视化数据库管理界面
 
 ## 管理后台
 
-访问 `http://localhost:8000/admin` 使用管理员账户登录
+访问 `http://localhost:8000/admin`，使用管理员账户登录
 
 ### 功能模块
 - 📊 **数据面板**: 用户统计、会话分析
 - 👥 **用户管理**: 批量创建用户（用户名+密码）、启停账户
 - 📡 **会话监控**: 实时会话状态监控
 - 💾 **数据库管理**: 查看、编辑、删除数据记录
-- ⚙️ **系统配置**: 模型配置、并发设置、使用限制
+- ⚙️ **系统配置**: 模型配置、并发设置、用户限额
 
 ## 核心配置说明
 
@@ -206,11 +194,17 @@ A: 这是因为 Gemini API 可能阻止流式请求。解决方法：
 
 ## 用户账户管理
 
-系统采用 JWT 认证体系，替代了原有的卡密机制：
+系统采用 JWT 认证，管理员在后台批量创建账户，普通用户使用用户名和密码登录。
 
 - **管理员**：登录后台后，在"添加用户"面板粘贴 JSON 数组批量创建账户
-- **普通用户**：使用用户名+密码登录，数据完全隔离，支持同时提交多个润色任务
-- **示例**：创建两个用户 `[{"username":"zhangsan","password":"pass123","display_name":"张三"}, {"username":"lisi","password":"pass456","display_name":"李四"}]`
+- **普通用户**：使用分配的用户名和密码登录，数据完全隔离，可同时提交多个润色任务
+- **JSON 格式示例**：
+  ```json
+  [
+    {"username":"zhangsan","password":"pass123","display_name":"张三"},
+    {"username":"lisi","password":"pass456","display_name":"李四"}
+  ]
+  ```
 
 ## 自行构建可执行文件
 
@@ -239,37 +233,19 @@ git push origin v1.0.0
 
 构建完成后，可在 Releases 页面下载各平台的可执行文件。
 
-## License
-未经允许禁止商业使用
+### 运行测试
 
-Creative Commons (CC BY-NC-SA 4.0)
+```bash
+# 无 API 测试（认证、会话、并发、数据隔离 — 39 个用例）
+cd package/backend && python -m pytest tests/ -k "not integration" -v
+
+# 集成测试（需要真实 API 凭证 — 11 个用例）
+BYPASS_AIGC_API_KEY=sk-xxx BYPASS_AIGC_BASE_URL=https://your-proxy/v1 \
+BYPASS_AIGC_MODEL=gemini-2.5-pro \
+python -m pytest tests/test_integration.py -v -s
+```
+
+## License
+CC BY-NC-SA 4.0
 
 [![Star History Chart](https://api.star-history.com/svg?repos=chi111i/BypassAIGC&type=Date)](https://star-history.com/#chi111i/BypassAIGC)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
