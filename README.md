@@ -37,9 +37,21 @@ gptzero
 
 4. 再次运行程序，将自动打开浏览器
 
-5. 访问管理后台创建卡密
+5. 访问管理后台（默认用户名 `admin`，密码见 `.env`）添加用户账户
 
 > 💡 提示：数据库文件 `ai_polish.db` 和配置文件 `.env` 都保存在可执行文件同目录，方便备份和迁移。
+
+### 运行测试
+
+```bash
+# 无 API 测试（认证、会话、并发、数据隔离 — 39 个用例）
+cd package/backend && python -m pytest tests/ -k "not integration" -v
+
+# 集成测试（需要真实 API 凭证 — 11 个用例）
+BYPASS_AIGC_API_KEY=sk-xxx BYPASS_AIGC_BASE_URL=https://your-proxy/v1 \
+BYPASS_AIGC_MODEL=gemini-2.5-pro \
+python -m pytest tests/test_integration.py -v -s
+```
 
 ### 配置文件说明
 
@@ -74,6 +86,13 @@ EMOTION_BASE_URL=http://IP:PORT/v1
 
 # 并发配置
 MAX_CONCURRENT_USERS=7
+MAX_CONCURRENT_PER_USER=3
+
+# 流式输出配置（推荐保持默认值）
+USE_STREAMING=false  # 默认禁用，避免某些API（如Gemini）返回阻止错误
+
+# API 请求间隔 (秒，每段落处理后等待)
+API_REQUEST_INTERVAL=6
 
 # 会话压缩配置
 HISTORY_COMPRESSION_THRESHOLD=2000
@@ -81,18 +100,15 @@ COMPRESSION_MODEL=gemini-2.5-pro
 COMPRESSION_API_KEY=KEY
 COMPRESSION_BASE_URL=http://IP:PORT/v1
 
-# 流式输出配置（推荐保持默认值）
-USE_STREAMING=false  # 默认禁用，避免某些API（如Gemini）返回阻止错误
-
 # JWT 密钥
 SECRET_KEY=JWT-key
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
+USER_TOKEN_EXPIRE_HOURS=24
 
 # 管理员账户
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
-DEFAULT_USAGE_LIMIT=1
 SEGMENT_SKIP_THRESHOLD=15
 ```
 
@@ -111,8 +127,8 @@ SEGMENT_SKIP_THRESHOLD=15
 
 - **双阶段优化**: 论文润色 + 学术增强
 - **智能分段**: 自动识别标题，跳过短段落
-- **使用限制**: 卡密系统，可配置使用次数
-- **并发控制**: 队列管理，动态调整并发数
+- **使用限制**: JWT 账户系统，管理员批量创建用户，用户数据隔离
+- **并发控制**: 全局并发 + 每用户并发限制，支持同一用户并行提交多个任务
 - **实时配置**: 修改配置无需重启服务
 - **数据管理**: 可视化数据库管理界面
 
@@ -122,7 +138,7 @@ SEGMENT_SKIP_THRESHOLD=15
 
 ### 功能模块
 - 📊 **数据面板**: 用户统计、会话分析
-- 👥 **用户管理**: 卡密生成、使用次数控制
+- 👥 **用户管理**: 批量创建用户（用户名+密码）、启停账户
 - 📡 **会话监控**: 实时会话状态监控
 - 💾 **数据库管理**: 查看、编辑、删除数据记录
 - ⚙️ **系统配置**: 模型配置、并发设置、使用限制
@@ -132,10 +148,12 @@ SEGMENT_SKIP_THRESHOLD=15
 | 配置项 | 说明 | 默认值 |
 |--------|------|--------|
 | `MAX_CONCURRENT_USERS` | 最大并发用户数 | 5 |
-| `DEFAULT_USAGE_LIMIT` | 新用户默认使用次数 | 1 |
+| `MAX_CONCURRENT_PER_USER` | 每用户最大并发任务数 | 3 |
 | `SEGMENT_SKIP_THRESHOLD` | 段落跳过阈值（字符数） | 15 |
 | `HISTORY_COMPRESSION_THRESHOLD` | 历史压缩阈值 | 5000 |
 | `USE_STREAMING` | 启用流式输出模式 | false（推荐）|
+| `API_REQUEST_INTERVAL` | API 请求间隔（秒） | 6 |
+| `USER_TOKEN_EXPIRE_HOURS` | 用户登录有效期（小时） | 24 |
 
 ## 项目结构
 
@@ -171,7 +189,7 @@ A: 关闭其他占用 8000 端口的程序
 A: 重启程序使配置生效
 
 **Q: 登录失败？**  
-A: 检查 `.env` 中的 `ADMIN_USERNAME` 和 `ADMIN_PASSWORD`
+A: 检查 `.env` 中的 `ADMIN_USERNAME` 和 `ADMIN_PASSWORD`。普通用户账户需要在管理后台创建。
 
 **Q: AI 调用失败？**  
 A: 检查 API Key 和 Base URL 配置是否正确
@@ -185,6 +203,14 @@ A: 这是因为 Gemini API 可能阻止流式请求。解决方法：
 5. 重新运行优化任务
 
 默认配置已经禁用了流式输出，如果仍然遇到此问题，请检查 `.env` 文件中的 `USE_STREAMING` 设置是否为 `false`
+
+## 用户账户管理
+
+系统采用 JWT 认证体系，替代了原有的卡密机制：
+
+- **管理员**：登录后台后，在"添加用户"面板粘贴 JSON 数组批量创建账户
+- **普通用户**：使用用户名+密码登录，数据完全隔离，支持同时提交多个润色任务
+- **示例**：创建两个用户 `[{"username":"zhangsan","password":"pass123","display_name":"张三"}, {"username":"lisi","password":"pass456","display_name":"李四"}]`
 
 ## 自行构建可执行文件
 
