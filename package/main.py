@@ -54,7 +54,7 @@ import uvicorn
 # 导入后端应用组件
 from app.config import settings
 from app.database import init_db
-from app.routes import admin, prompts, optimization
+from app.routes import admin, prompts, optimization, auth
 from app.word_formatter import router as word_formatter_router
 from app.word_formatter.services import get_job_manager
 from app.models.models import CustomPrompt
@@ -113,6 +113,7 @@ async def add_no_cache_headers(request: Request, call_next):
     return response
 
 # 注册 API 路由（添加 /api 前缀，与 backend/app/main.py 保持一致）
+app.include_router(auth.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(prompts.router, prefix="/api")
 app.include_router(optimization.router, prefix="/api")
@@ -366,6 +367,33 @@ if os.path.exists(STATIC_DIR):
             return FileResponse(index_file)
         return {"error": "Word formatter page not found"}
 
+    @app.get("/spec-generator")
+    @app.get("/spec-generator/{path:path}")
+    async def serve_spec_generator(path: str = ""):
+        """服务排版规范生成器页面"""
+        index_file = os.path.join(STATIC_DIR, 'index.html')
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        return {"error": "Spec generator page not found"}
+
+    @app.get("/article-preprocessor")
+    @app.get("/article-preprocessor/{path:path}")
+    async def serve_preprocessor(path: str = ""):
+        """服务文章预处理页面"""
+        index_file = os.path.join(STATIC_DIR, 'index.html')
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        return {"error": "Preprocessor page not found"}
+
+    @app.get("/format-checker")
+    @app.get("/format-checker/{path:path}")
+    async def serve_format_checker(path: str = ""):
+        """服务格式检查页面"""
+        index_file = os.path.join(STATIC_DIR, 'index.html')
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        return {"error": "Format checker page not found"}
+
     @app.get("/session/{session_id}")
     async def serve_session(session_id: str):
         """服务会话详情页面"""
@@ -457,6 +485,7 @@ EMOTION_BASE_URL=https://api.openai.com/v1
 
 # 并发配置
 MAX_CONCURRENT_USERS=7
+MAX_CONCURRENT_PER_USER=3
 
 # API 请求间隔 (秒，每段落处理后等待，避免触发频率限制)
 API_REQUEST_INTERVAL=6
@@ -475,7 +504,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES=60
 # 管理员账户 (请修改默认密码)
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=please-change-this-password
-DEFAULT_USAGE_LIMIT=1
 SEGMENT_SKIP_THRESHOLD=15
 """
         with open(ENV_FILE, 'w', encoding='utf-8') as f:
