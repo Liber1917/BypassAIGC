@@ -208,6 +208,8 @@ A: 这是因为 Gemini API 可能阻止流式请求。解决方法：
 
 ## 自行构建可执行文件
 
+**环境要求**：Python 3.12+、Node.js 18+
+
 如果需要自行构建可执行文件，请参考 [package/README.md](package/README.md)。
 
 ### 本地构建
