@@ -87,13 +87,13 @@ class OptimizationService:
             self.db.commit()
             
             # 获取并发权限
-            acquired = await concurrency_manager.acquire(self.session_obj.session_id)
+            acquired = await concurrency_manager.acquire(self.session_obj.session_id, user_id=self.session_obj.user_id)
             if not acquired:
                 self.session_obj.status = "queued"
                 self.db.commit()
                 
-                # 等待获取权限 - acquire 方法内部已包含等待逻辑
-                acquired = await concurrency_manager.acquire(self.session_obj.session_id)
+                # 等待获取权限
+                acquired = await concurrency_manager.acquire(self.session_obj.session_id, user_id=self.session_obj.user_id)
                 if not acquired:
                     raise Exception("等待并发权限超时")
             
