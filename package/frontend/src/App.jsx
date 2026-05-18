@@ -12,9 +12,9 @@ import FormatCheckerPage from './pages/FormatCheckerPage';
 import './index.css';
 
 const ProtectedRoute = ({ children }) => {
-  const cardKey = localStorage.getItem('cardKey');
+  const token = localStorage.getItem('authToken');
   
-  if (!cardKey) {
+  if (!token) {
     return <Navigate to="/" replace />;
   }
   

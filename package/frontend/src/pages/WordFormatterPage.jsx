@@ -311,7 +311,8 @@ const WordFormatterPage = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('cardKey');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('username');
     navigate('/');
   };
 
