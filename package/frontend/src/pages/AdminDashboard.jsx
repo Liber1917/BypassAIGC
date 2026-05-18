@@ -55,6 +55,10 @@ const AdminDashboard = () => {
   const [newCardKey, setNewCardKey] = useState('');
   const [generatedKey, setGeneratedKey] = useState('');
   
+  // User creation state
+  const [newUserJson, setNewUserJson] = useState('');
+  const [creatingUsers, setCreatingUsers] = useState(false);
+  
   // Batch generation state
   const [batchCount, setBatchCount] = useState(5);
   const [batchPrefix, setBatchPrefix] = useState('');
@@ -179,6 +183,40 @@ const AdminDashboard = () => {
       fetchUsers();
     } catch (error) {
       toast.error(error.response?.data?.detail || '生成卡密失败');
+    }
+  };
+
+  const handleCreateUsers = async () => {
+    if (!newUserJson.trim()) {
+      toast.error('请输入用户数据');
+      return;
+    }
+    let userList;
+    try {
+      userList = JSON.parse(newUserJson);
+      if (!Array.isArray(userList) || userList.length === 0) {
+        toast.error('请输入 JSON 数组格式: [{"username":"...", "password":"..."}]');
+        return;
+      }
+    } catch {
+      toast.error('JSON 格式错误');
+      return;
+    }
+
+    setCreatingUsers(true);
+    try {
+      const response = await axios.post('/api/admin/users/create',
+        userList,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      );
+      const { total_created, skipped } = response.data;
+      toast.success(`成功创建 ${total_created} 个用户` + (skipped.length > 0 ? `，跳过 ${skipped.length} 个重复` : ''));
+      setNewUserJson('');
+      fetchUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || '创建用户失败');
+    } finally {
+      setCreatingUsers(false);
     }
   };
 
@@ -748,6 +786,44 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Add Users (JWT-based) */}
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-2xl shadow-ios p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
+                      <Users className="w-5 h-5 text-green-600" />
+                    </div>
+                    <h2 className="text-lg font-bold text-gray-900">添加用户</h2>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-2">
+                        用户数据 (JSON 数组)
+                      </label>
+                      <textarea
+                        value={newUserJson}
+                        onChange={(e) => setNewUserJson(e.target.value)}
+                        placeholder={`[{"username":"zhangsan","password":"pass123","display_name":"张三"}]`}
+                        rows={5}
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-mono"
+                      />
+                    </div>
+                    <button
+                      onClick={handleCreateUsers}
+                      disabled={creatingUsers || !newUserJson.trim()}
+                      className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm shadow-sm"
+                    >
+                      {creatingUsers ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Plus className="w-4 h-4" />
+                      )}
+                      批量创建
+                    </button>
+                  </div>
                 </div>
               </div>
 
