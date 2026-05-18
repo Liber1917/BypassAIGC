@@ -1,6 +1,6 @@
 # AI 学术写作助手 - 打包依赖
-# 包含后端所有依赖 + PyInstaller
-# Python 3.12+ 推荐，部分编译包需要较新版本才有 wheel
+# Python 3.9+ 可运行，构建 exe 推荐 3.12+（pydantic 等包的 wheel 覆盖更全）
+# 3.14 也可用，pip 会自动拉取兼容版本
 
 # FastAPI 后端依赖
 fastapi>=0.109.0,<1.0
