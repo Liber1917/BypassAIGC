@@ -145,18 +145,29 @@ def _migrate_database_schema():
                 # 迁移 users 表
                 if "users" in tables:
                     user_columns = {column["name"] for column in inspector.get_columns("users")}
-                    
+
+                    if "username" not in user_columns:
+                        if _add_column_safely(conn, "users", "username", "VARCHAR(255)"):
+                            print("  ✓ 添加字段: users.username")
+
+                    if "password_hash" not in user_columns:
+                        if _add_column_safely(conn, "users", "password_hash", "VARCHAR(255)"):
+                            print("  ✓ 添加字段: users.password_hash")
+
+                    if "display_name" not in user_columns:
+                        if _add_column_safely(conn, "users", "display_name", "VARCHAR(255)"):
+                            print("  ✓ 添加字段: users.display_name")
+
                     if "usage_limit" not in user_columns:
-                        if _add_column_safely(conn, "users", "usage_limit", f"INTEGER DEFAULT {settings.DEFAULT_USAGE_LIMIT}"):
+                        if _add_column_safely(conn, "users", "usage_limit", "INTEGER DEFAULT 0"):
                             print("  ✓ 添加字段: users.usage_limit")
-                    
+
                     if "usage_count" not in user_columns:
                         if _add_column_safely(conn, "users", "usage_count", "INTEGER DEFAULT 0"):
                             print("  ✓ 添加字段: users.usage_count")
-                    
-                    # 更新 NULL 值
+
                     try:
-                        conn.execute(text(f"UPDATE users SET usage_limit = {settings.DEFAULT_USAGE_LIMIT} WHERE usage_limit IS NULL"))
+                        conn.execute(text("UPDATE users SET usage_limit = 0 WHERE usage_limit IS NULL"))
                         conn.execute(text("UPDATE users SET usage_count = 0 WHERE usage_count IS NULL"))
                         conn.commit()
                     except Exception:
