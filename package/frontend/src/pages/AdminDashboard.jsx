@@ -315,9 +315,9 @@ const AdminDashboard = () => {
   };
 
   const exportUsersToCSV = () => {
-    const headers = ['卡密', '状态', '创建时间', '最后使用'];
+    const headers = ['用户名', '状态', '创建时间', '最后使用'];
     const rows = users.map(user => [
-      user.card_key,
+      user.username || user.card_key,
       user.is_active ? '启用' : '禁用',
       new Date(user.created_at).toLocaleString('zh-CN'),
       user.last_used ? new Date(user.last_used).toLocaleString('zh-CN') : '从未使用'
@@ -728,17 +728,17 @@ const AdminDashboard = () => {
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Card Key Generation */}
+              {/* Legacy Card Key (deprecated, kept for backward compat) */}
               <div className="lg:col-span-1">
-                <div className="bg-white rounded-2xl shadow-ios p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                      <Key className="w-5 h-5 text-blue-600" />
+                <details className="bg-white rounded-2xl shadow-ios p-6 opacity-60 hover:opacity-100 transition-opacity">
+                  <summary className="flex items-center gap-3 cursor-pointer">
+                    <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center">
+                      <Key className="w-5 h-5 text-gray-400" />
                     </div>
-                    <h2 className="text-lg font-bold text-gray-900">生成卡密</h2>
-                  </div>
+                    <h2 className="text-lg font-bold text-gray-500">旧版卡密（已废弃）</h2>
+                  </summary>
 
-                  <form onSubmit={handleGenerateCardKey} className="space-y-4">
+                  <form onSubmit={handleGenerateCardKey} className="space-y-4 mt-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-2">
                         卡密内容
@@ -751,28 +751,18 @@ const AdminDashboard = () => {
                         placeholder="输入自定义卡密"
                       />
                     </div>
-
                     <button
                       type="submit"
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm shadow-sm"
+                      className="w-full bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm shadow-sm"
                     >
                       <Plus className="w-4 h-4" />
                       生成卡密
                     </button>
-                    
-                    <button
-                      type="button"
-                      onClick={() => setShowBatchModal(true)}
-                      className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm"
-                    >
-                      <Key className="w-4 h-4" />
-                      批量生成
-                    </button>
                   </form>
 
                   {generatedKey && (
-                    <div className="mt-6 p-4 bg-green-50/50 border border-green-100 rounded-xl">
-                      <p className="text-xs font-medium text-green-700 mb-2 uppercase tracking-wide">生成的卡密</p>
+                    <div className="mt-4 p-4 bg-green-50/50 border border-green-100 rounded-xl">
+                      <p className="text-xs font-medium text-green-700 mb-2">生成的卡密</p>
                       <div className="flex items-center gap-2">
                         <code className="flex-1 bg-white px-3 py-2 rounded-lg border border-green-200 text-sm font-mono text-green-800">
                           {generatedKey}
@@ -786,7 +776,7 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   )}
-                </div>
+                </details>
               </div>
 
               {/* Add Users (JWT-based) */}
@@ -896,7 +886,7 @@ const AdminDashboard = () => {
                             <tr key={user.id} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <code className="text-sm font-mono text-gray-900">
-                                  {user.card_key}
+                                  {user.username || user.card_key}
                                 </code>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -1112,8 +1102,8 @@ const AdminDashboard = () => {
               <h4 className="font-semibold text-gray-800 mb-3">基本信息</h4>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-gray-600">卡密：</span>
-                  <code className="ml-2 font-mono text-blue-600">{userDetails.user.card_key}</code>
+                  <span className="text-gray-600">用户名：</span>
+                  <code className="ml-2 font-mono text-blue-600">{userDetails.user.username || userDetails.user.card_key}</code>
                 </div>
                 <div>
                   <span className="text-gray-600">状态：</span>

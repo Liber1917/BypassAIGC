@@ -580,6 +580,7 @@ async def get_all_sessions(
             "session_id": session.id,
             "user_id": session.user_id,
             "card_key": session.user.card_key if session.user else None,
+            "username": session.user.username if session.user else None,
             "status": session.status,
             "processing_mode": session.processing_mode,
             "original_char_count": original_length_map.get(session.id, 0),
