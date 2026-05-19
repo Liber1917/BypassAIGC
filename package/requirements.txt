@@ -31,3 +31,4 @@ pyinstaller>=6.5
 jaraco.text
 jaraco.functools
 jaraco.context
+platformdirs

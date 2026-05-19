@@ -146,9 +146,6 @@ const WorkspacePage = () => {
     }
   }, []);
 
-  const updateSessionProgress = useCallback(async (sessionId) => {
-
-  // 初始加载 - 只在组件挂载时执行一次
   const pollAllActiveSessions = useCallback(async () => {
     const active = sessions.filter(
       s => s.status === 'processing' || s.status === 'queued'
@@ -279,12 +276,6 @@ const WorkspacePage = () => {
       toast.error(error.response?.data?.detail || '重试失败，请稍后再试');
     }
   }, [loadSessions]);
-
-  // 使用 useMemo 缓存当前活跃会话的数据
-  const currentActiveSessionData = useMemo(() => {
-    return sessions.find(s => s.session_id === activeSession);
-  }, [sessions, activeSession]);
-
 
   return (
     <div className="min-h-screen bg-ios-background">
