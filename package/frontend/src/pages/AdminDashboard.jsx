@@ -6,7 +6,6 @@ import {
   LogIn,
   LogOut,
   Users,
-  Key,
   Trash2,
   CheckCircle,
   XCircle,
@@ -51,10 +50,6 @@ const AdminDashboard = () => {
   const [statistics, setStatistics] = useState(null);
   const [loadingStats, setLoadingStats] = useState(false);
 
-  // Card key generation state
-  const [newCardKey, setNewCardKey] = useState('');
-  const [generatedKey, setGeneratedKey] = useState('');
-  
   // User creation state
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -167,28 +162,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleGenerateCardKey = async (e) => {
-    e.preventDefault();
-    if (!newCardKey.trim()) {
-      toast.error('请输入卡密');
-      return;
-    }
-
-    try {
-      const response = await axios.post('/api/admin/card-keys', 
-        { card_key: newCardKey },
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      );
-      
-      setGeneratedKey(response.data.card_key);
-      setNewCardKey('');
-      toast.success('卡密生成成功！');
-      fetchUsers();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || '生成卡密失败');
-    }
-  };
-
   const handleAddUser = () => {
     if (!newUsername.trim() || !newPassword.trim()) {
       toast.error('用户名和密码不能为空');
@@ -262,11 +235,6 @@ const AdminDashboard = () => {
     } catch (error) {
       toast.error('删除用户失败');
     }
-  };
-
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    toast.success('已复制到剪贴板');
   };
 
   const handleBatchGenerate = async () => {
@@ -742,149 +710,122 @@ const AdminDashboard = () => {
               </>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Legacy Card Key (deprecated, kept for backward compat) */}
-              <div className="lg:col-span-1">
-                <details className="bg-white rounded-2xl shadow-ios p-6 opacity-60 hover:opacity-100 transition-opacity">
-                  <summary className="flex items-center gap-3 cursor-pointer">
-                    <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center">
-                      <Key className="w-5 h-5 text-gray-400" />
-                    </div>
-                    <h2 className="text-lg font-bold text-gray-500">旧版卡密（已废弃）</h2>
-                  </summary>
-
-                  <form onSubmit={handleGenerateCardKey} className="space-y-4 mt-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500 mb-2">
-                        卡密内容
-                      </label>
-                      <input
-                        type="text"
-                        value={newCardKey}
-                        onChange={(e) => setNewCardKey(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                        placeholder="输入自定义卡密"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="w-full bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm shadow-sm"
-                    >
-                      <Plus className="w-4 h-4" />
-                      生成卡密
-                    </button>
-                  </form>
-
-                  {generatedKey && (
-                    <div className="mt-4 p-4 bg-green-50/50 border border-green-100 rounded-xl">
-                      <p className="text-xs font-medium text-green-700 mb-2">生成的卡密</p>
-                      <div className="flex items-center gap-2">
-                        <code className="flex-1 bg-white px-3 py-2 rounded-lg border border-green-200 text-sm font-mono text-green-800">
-                          {generatedKey}
-                        </code>
-                        <button
-                          onClick={() => copyToClipboard(generatedKey)}
-                          className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm transition-colors shadow-sm"
-                        >
-                          复制
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </details>
-              </div>
-
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Add Users */}
-              <div className="lg:col-span-1">
-                <div className="bg-white rounded-2xl shadow-ios p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
-                      <Users className="w-5 h-5 text-green-600" />
+              <div className="lg:col-span-12">
+                <div className="bg-white rounded-2xl shadow-ios overflow-hidden">
+                  <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-green-50/70 to-white">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Users className="w-5 h-5 text-green-700" />
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-bold text-gray-900">添加用户</h2>
+                          <p className="text-xs text-gray-500 mt-0.5">先加入待创建列表，再统一提交</p>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 bg-white border border-green-100 rounded-lg text-xs font-medium text-green-700">
+                        {pendingUsers.length} 待创建
+                      </span>
                     </div>
-                    <h2 className="text-lg font-bold text-gray-900">添加用户</h2>
                   </div>
 
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={newUsername}
-                      onChange={(e) => setNewUsername(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddUser()}
-                      placeholder="用户名"
-                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                    />
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddUser()}
-                      placeholder="密码"
-                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                    />
-                    <input
-                      type="text"
-                      value={newDisplayName}
-                      onChange={(e) => setNewDisplayName(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddUser()}
-                      placeholder="显示名称（可选）"
-                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                    />
-                    <button
-                      onClick={handleAddUser}
-                      disabled={!newUsername.trim() || !newPassword.trim()}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-2 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-1 text-sm"
-                    >
-                      <Plus className="w-4 h-4" />
-                      添加到列表
-                    </button>
-                  </div>
-
-                  {pendingUsers.length > 0 && (
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-gray-500">待创建 ({pendingUsers.length})</span>
-                        <button
-                          onClick={() => setPendingUsers([])}
-                          className="text-xs text-gray-400 hover:text-red-500"
-                        >
-                          清空
-                        </button>
-                      </div>
-                      <div className="max-h-40 overflow-y-auto space-y-1.5 mb-3">
-                        {pendingUsers.map((u, i) => (
-                          <div key={u.username} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm">
-                            <div>
-                              <span className="font-medium text-gray-800">{u.username}</span>
-                              {u.display_name && <span className="text-gray-400 ml-2">({u.display_name})</span>}
-                            </div>
-                            <button
-                              onClick={() => handleRemovePendingUser(u.username)}
-                              className="text-gray-300 hover:text-red-500 p-0.5"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+                  <div className="p-5">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                      <label className="md:col-span-3 block">
+                        <span className="block text-xs font-medium text-gray-500 mb-1.5">用户名</span>
+                        <input
+                          type="text"
+                          value={newUsername}
+                          onChange={(e) => setNewUsername(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddUser()}
+                          placeholder="例如 chi11i"
+                          className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                        />
+                      </label>
+                      <label className="md:col-span-3 block">
+                        <span className="block text-xs font-medium text-gray-500 mb-1.5">密码</span>
+                        <input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddUser()}
+                          placeholder="登录密码"
+                          className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                        />
+                      </label>
+                      <label className="md:col-span-4 block">
+                        <span className="block text-xs font-medium text-gray-500 mb-1.5">显示名称</span>
+                        <input
+                          type="text"
+                          value={newDisplayName}
+                          onChange={(e) => setNewDisplayName(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddUser()}
+                          placeholder="可选"
+                          className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                        />
+                      </label>
                       <button
-                        onClick={handleCreateUsers}
-                        disabled={creatingUsers}
-                        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm shadow-sm"
+                        onClick={handleAddUser}
+                        disabled={!newUsername.trim() || !newPassword.trim()}
+                        className="md:col-span-2 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-1.5 text-sm"
                       >
-                        {creatingUsers ? (
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : (
-                          <Plus className="w-4 h-4" />
-                        )}
-                        批量创建 ({pendingUsers.length})
+                        <Plus className="w-4 h-4" />
+                        加入
                       </button>
                     </div>
-                  )}
+
+                    {pendingUsers.length > 0 && (
+                      <div className="mt-5 border border-green-100 rounded-xl overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-3 bg-green-50/60 border-b border-green-100">
+                          <span className="text-xs font-semibold text-green-800">待创建用户 ({pendingUsers.length})</span>
+                          <button
+                            onClick={() => setPendingUsers([])}
+                            className="text-xs text-gray-500 hover:text-red-500 transition-colors"
+                          >
+                            清空
+                          </button>
+                        </div>
+                        <div className="max-h-44 overflow-y-auto divide-y divide-gray-100">
+                          {pendingUsers.map((u) => (
+                            <div key={u.username} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+                              <div className="min-w-0">
+                                <span className="font-medium text-gray-900">{u.username}</span>
+                                {u.display_name && <span className="text-gray-400 ml-2">({u.display_name})</span>}
+                              </div>
+                              <button
+                                onClick={() => handleRemovePendingUser(u.username)}
+                                className="text-gray-300 hover:text-red-500 p-1 rounded-md hover:bg-red-50 transition-colors"
+                                title="移除"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="p-3 bg-white border-t border-gray-100">
+                          <button
+                            onClick={handleCreateUsers}
+                            disabled={creatingUsers}
+                            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm shadow-sm"
+                          >
+                            {creatingUsers ? (
+                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                              <Plus className="w-4 h-4" />
+                            )}
+                            批量创建 ({pendingUsers.length})
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* Users List */}
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-12">
                 <div className="bg-white rounded-2xl shadow-ios overflow-hidden">
                   <div className="p-6 border-b border-gray-100">
                     <div className="flex items-center justify-between flex-wrap gap-4">
