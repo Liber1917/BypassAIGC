@@ -78,6 +78,24 @@ def verify_admin_credentials(username: str, password: str) -> bool:
     return username == settings.ADMIN_USERNAME and password == settings.ADMIN_PASSWORD
 
 
+def _reload_admin_credentials():
+    """只重读 .env 中的管理员凭据"""
+    import os as _os
+    from app.config import get_env_file_path
+    env_path = get_env_file_path()
+    if not _os.path.exists(env_path):
+        return
+    with open(env_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                key = key.strip()
+                value = value.strip()
+                if key in ('ADMIN_USERNAME', 'ADMIN_PASSWORD'):
+                    setattr(settings, key, value)
+
+
 def verify_admin_token(token: str) -> bool:
     payload = verify_token(token)
     if not payload:
@@ -105,9 +123,11 @@ def _model_to_dict(record: Any) -> Dict[str, Any]:
 
 @router.post("/login", response_model=AdminLoginResponse)
 async def admin_login(credentials: AdminLogin) -> AdminLoginResponse:
-    # 速率限制: 每分钟最多5次登录尝试 (在 main.py 的 limiter 中配置)
     if not verify_admin_credentials(credentials.username, credentials.password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="用户名或密码错误")
+        # 手动改了 .env 没重启？只重读密码，不动整个 settings
+        _reload_admin_credentials()
+        if not verify_admin_credentials(credentials.username, credentials.password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="用户名或密码错误")
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
