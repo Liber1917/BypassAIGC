@@ -402,13 +402,6 @@ if os.path.exists(STATIC_DIR):
             return FileResponse(index_file)
         return {"error": "Session page not found"}
     
-    @app.get("/access/{card_key}")
-    async def serve_access(card_key: str):
-        """服务访问页面"""
-        index_file = os.path.join(STATIC_DIR, 'index.html')
-        if os.path.exists(index_file):
-            return FileResponse(index_file)
-        return {"error": "Access page not found"}
     
     # 处理其他静态文件
     @app.get("/{file_path:path}")

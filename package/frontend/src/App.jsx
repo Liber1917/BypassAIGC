@@ -51,7 +51,6 @@ function App() {
       
       <Routes>
         <Route path="/" element={<WelcomePage />} />
-        <Route path="/access/:cardKey" element={<WelcomePage />} />
         <Route path="/admin" element={<AdminDashboard />} />
         
         <Route
