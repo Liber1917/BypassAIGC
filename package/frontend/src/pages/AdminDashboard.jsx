@@ -56,7 +56,10 @@ const AdminDashboard = () => {
   const [generatedKey, setGeneratedKey] = useState('');
   
   // User creation state
-  const [newUserJson, setNewUserJson] = useState('');
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newDisplayName, setNewDisplayName] = useState('');
+  const [pendingUsers, setPendingUsers] = useState([]);
   const [creatingUsers, setCreatingUsers] = useState(false);
   
   // Batch generation state
@@ -186,32 +189,44 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleCreateUsers = async () => {
-    if (!newUserJson.trim()) {
-      toast.error('请输入用户数据');
+  const handleAddUser = () => {
+    if (!newUsername.trim() || !newPassword.trim()) {
+      toast.error('用户名和密码不能为空');
       return;
     }
-    let userList;
-    try {
-      userList = JSON.parse(newUserJson);
-      if (!Array.isArray(userList) || userList.length === 0) {
-        toast.error('请输入 JSON 数组格式: [{"username":"...", "password":"..."}]');
-        return;
-      }
-    } catch {
-      toast.error('JSON 格式错误');
+    const exists = pendingUsers.find(u => u.username === newUsername.trim());
+    if (exists) {
+      toast.error('该用户名已在待添加列表中');
       return;
     }
+    setPendingUsers(prev => [...prev, {
+      username: newUsername.trim(),
+      password: newPassword,
+      display_name: newDisplayName.trim() || undefined,
+    }]);
+    setNewUsername('');
+    setNewPassword('');
+    setNewDisplayName('');
+  };
 
+  const handleRemovePendingUser = (username) => {
+    setPendingUsers(prev => prev.filter(u => u.username !== username));
+  };
+
+  const handleCreateUsers = async () => {
+    if (pendingUsers.length === 0) {
+      toast.error('请先添加用户');
+      return;
+    }
     setCreatingUsers(true);
     try {
       const response = await axios.post('/api/admin/users/create',
-        userList,
+        pendingUsers,
         { headers: { Authorization: `Bearer ${adminToken}` } }
       );
       const { total_created, skipped } = response.data;
       toast.success(`成功创建 ${total_created} 个用户` + (skipped.length > 0 ? `，跳过 ${skipped.length} 个重复` : ''));
-      setNewUserJson('');
+      setPendingUsers([]);
       fetchUsers();
     } catch (error) {
       toast.error(error.response?.data?.detail || '创建用户失败');
@@ -779,7 +794,7 @@ const AdminDashboard = () => {
                 </details>
               </div>
 
-              {/* Add Users (JWT-based) */}
+              {/* Add Users */}
               <div className="lg:col-span-1">
                 <div className="bg-white rounded-2xl shadow-ios p-6">
                   <div className="flex items-center gap-3 mb-6">
@@ -788,32 +803,83 @@ const AdminDashboard = () => {
                     </div>
                     <h2 className="text-lg font-bold text-gray-900">添加用户</h2>
                   </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500 mb-2">
-                        用户数据 (JSON 数组)
-                      </label>
-                      <textarea
-                        value={newUserJson}
-                        onChange={(e) => setNewUserJson(e.target.value)}
-                        placeholder={`[{"username":"zhangsan","password":"pass123","display_name":"张三"}]`}
-                        rows={5}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-mono"
-                      />
-                    </div>
+
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddUser()}
+                      placeholder="用户名"
+                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                    />
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddUser()}
+                      placeholder="密码"
+                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                    />
+                    <input
+                      type="text"
+                      value={newDisplayName}
+                      onChange={(e) => setNewDisplayName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddUser()}
+                      placeholder="显示名称（可选）"
+                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                    />
                     <button
-                      onClick={handleCreateUsers}
-                      disabled={creatingUsers || !newUserJson.trim()}
-                      className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm shadow-sm"
+                      onClick={handleAddUser}
+                      disabled={!newUsername.trim() || !newPassword.trim()}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-2 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-1 text-sm"
                     >
-                      {creatingUsers ? (
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <Plus className="w-4 h-4" />
-                      )}
-                      批量创建
+                      <Plus className="w-4 h-4" />
+                      添加到列表
                     </button>
                   </div>
+
+                  {pendingUsers.length > 0 && (
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-gray-500">待创建 ({pendingUsers.length})</span>
+                        <button
+                          onClick={() => setPendingUsers([])}
+                          className="text-xs text-gray-400 hover:text-red-500"
+                        >
+                          清空
+                        </button>
+                      </div>
+                      <div className="max-h-40 overflow-y-auto space-y-1.5 mb-3">
+                        {pendingUsers.map((u, i) => (
+                          <div key={u.username} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm">
+                            <div>
+                              <span className="font-medium text-gray-800">{u.username}</span>
+                              {u.display_name && <span className="text-gray-400 ml-2">({u.display_name})</span>}
+                            </div>
+                            <button
+                              onClick={() => handleRemovePendingUser(u.username)}
+                              className="text-gray-300 hover:text-red-500 p-0.5"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        onClick={handleCreateUsers}
+                        disabled={creatingUsers}
+                        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm shadow-sm"
+                      >
+                        {creatingUsers ? (
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <Plus className="w-4 h-4" />
+                        )}
+                        批量创建 ({pendingUsers.length})
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
