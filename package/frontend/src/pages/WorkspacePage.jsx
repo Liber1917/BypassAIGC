@@ -147,58 +147,60 @@ const WorkspacePage = () => {
   }, []);
 
   const updateSessionProgress = useCallback(async (sessionId) => {
-    try {
-      const response = await optimizationAPI.getSessionProgress(sessionId);
-      const progress = response.data;
-
-      // 更新会话列表中的进度 - 只在数据有变化时更新
-      setSessions(prev => {
-        const target = prev.find(s => s.session_id === sessionId);
-        if (target && target.progress === progress.progress && target.status === progress.status) {
-          return prev; // 无变化，不触发重渲染
-        }
-        return prev.map(s =>
-          s.session_id === sessionId ? { ...s, ...progress } : s
-        );
-      });
-
-      // 如果会话完成,刷新列表
-      if (progress.status === 'completed' || progress.status === 'failed') {
-        setActiveSession(null);
-        loadSessions();
-
-        if (progress.status === 'completed') {
-          toast.success('优化完成!');
-        } else {
-          toast.error(`优化失败: ${progress.error_message}`);
-        }
-      }
-    } catch (error) {
-      console.error('更新进度失败:', error);
-    }
-  }, [loadSessions]);
 
   // 初始加载 - 只在组件挂载时执行一次
+  const pollAllActiveSessions = useCallback(async () => {
+    const active = sessions.filter(
+      s => s.status === 'processing' || s.status === 'queued'
+    );
+    if (active.length === 0) return;
+
+    const results = await Promise.allSettled(
+      active.map(s => optimizationAPI.getSessionProgress(s.session_id))
+    );
+
+    let anyCompleted = false;
+    setSessions(prev => {
+      let updated = [...prev];
+      results.forEach((result, i) => {
+        if (result.status !== 'fulfilled') return;
+        const progress = result.value.data;
+        const sid = active[i].session_id;
+        const idx = updated.findIndex(s => s.session_id === sid);
+        if (idx < 0) return;
+        const target = updated[idx];
+        if (target.progress === progress.progress && target.status === progress.status) return;
+        updated[idx] = { ...updated[idx], ...progress };
+        if (progress.status === 'completed' || progress.status === 'failed') {
+          anyCompleted = true;
+        }
+      });
+      return [...updated];
+    });
+
+    if (anyCompleted) {
+      loadSessions();
+    }
+  }, [sessions, loadSessions]);
+
   useEffect(() => {
     loadSessions();
     loadQueueStatus();
   }, [loadSessions, loadQueueStatus]);
 
-  // 队列状态轮询 - 独立的 useEffect，避免与初始加载混淆
   useEffect(() => {
     const interval = setInterval(loadQueueStatus, 15000);
     return () => clearInterval(interval);
   }, [loadQueueStatus]);
 
   useEffect(() => {
-    // 如果有活跃会话,每4秒更新进度（进一步降低频率）
-    if (activeSession) {
-      const interval = setInterval(() => {
-        updateSessionProgress(activeSession);
-      }, 4000);
-      return () => clearInterval(interval);
-    }
-  }, [activeSession, updateSessionProgress]);
+    const active = sessions.filter(
+      s => s.status === 'processing' || s.status === 'queued'
+    );
+    if (active.length === 0) return;
+    const interval = setInterval(pollAllActiveSessions, 4000);
+    return () => clearInterval(interval);
+  }, [pollAllActiveSessions, sessions]);
 
   const handleStartOptimization = useCallback(async () => {
     if (!text.trim()) {
