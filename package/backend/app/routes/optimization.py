@@ -20,6 +20,8 @@ from sse_starlette.sse import EventSourceResponse
 
 router = APIRouter(prefix="/optimization", tags=["optimization"])
 
+running_tasks: dict[str, asyncio.Task] = {}
+
 
 def get_current_user(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)) -> User:
     if not authorization or not authorization.startswith("Bearer "):
@@ -39,8 +41,10 @@ def get_current_user(authorization: Optional[str] = Header(None), db: Session = 
     return user
 
 
-async def run_optimization(session_id: int):
+async def run_optimization(session_id: int, session_key: str):
     """后台运行优化任务（独立 DB 会话）"""
+    task = asyncio.current_task()
+    running_tasks[session_key] = task
     db = SessionLocal()
     try:
         session_obj = db.query(OptimizationSession).filter(
@@ -52,8 +56,11 @@ async def run_optimization(session_id: int):
         
         service = OptimizationService(db, session_obj)
         await service.start_optimization()
+    except asyncio.CancelledError:
+        pass  # 任务被取消，正常退出
     finally:
         db.close()
+        running_tasks.pop(session_key, None)
 
 
 @router.post("/start", response_model=SessionResponse)
@@ -110,7 +117,7 @@ async def start_optimization(
     db.commit()
     db.refresh(session)
     
-    background_tasks.add_task(run_optimization, session.id)
+    background_tasks.add_task(run_optimization, session.id, session_id)
     
     return session
 
@@ -387,7 +394,7 @@ async def delete_session(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """删除会话"""
+    """删除会话，同时取消后台任务并释放并发槽位"""
     user = current_user
     
     session = db.query(OptimizationSession).filter(
@@ -397,6 +404,14 @@ async def delete_session(
     
     if not session:
         raise HTTPException(status_code=404, detail="会话不存在")
+    
+    # 取消后台运行中的 asyncio Task
+    task = running_tasks.pop(session_id, None)
+    if task and not task.done():
+        task.cancel()
+    
+    # 释放并发槽位
+    await concurrency_manager.release(session_id)
     
     db.delete(session)
     db.commit()
@@ -431,7 +446,7 @@ async def retry_session(
     session.error_message = f"[重试中] 上次失败原因: {old_error}"
     db.commit()
 
-    background_tasks.add_task(run_optimization, session.id)
+    background_tasks.add_task(run_optimization, session.id, session_id)
 
     return {"message": "已重新排队处理未完成段落"}
 
@@ -442,7 +457,7 @@ async def stop_session(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """停止正在进行中的会话"""
+    """停止正在进行中的会话，取消后台任务并释放并发槽位"""
     user = current_user
 
     session = db.query(OptimizationSession).filter(
@@ -455,6 +470,14 @@ async def stop_session(
 
     if session.status not in ["queued", "processing"]:
         raise HTTPException(status_code=400, detail="只能停止排队中或处理中的会话")
+
+    # 取消后台运行中的 asyncio Task
+    task = running_tasks.pop(session_id, None)
+    if task and not task.done():
+        task.cancel()
+
+    # 释放并发槽位
+    await concurrency_manager.release(session_id)
 
     # 更新状态为 stopped
     session.status = "stopped"

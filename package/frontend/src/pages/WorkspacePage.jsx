@@ -228,8 +228,8 @@ const WorkspacePage = () => {
   }, [text, processingMode, isSubmitting, loadSessions]);
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('username');
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('username');
     navigate('/');
   }, [navigate]);
 

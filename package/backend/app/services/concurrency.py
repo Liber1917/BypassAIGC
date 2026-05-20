@@ -128,6 +128,9 @@ class ConcurrencyManager:
                 break  # 此用户已达上限，跳过
             self.queue.pop(0)
             self.active_sessions[next_session] = datetime.utcnow()
+            if user_id is not None:
+                self._session_user[next_session] = user_id
+                self.active_per_user[user_id] = self.active_per_user.get(user_id, 0) + 1
 
 
 # 全局并发管理器实例
