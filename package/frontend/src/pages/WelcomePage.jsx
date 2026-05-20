@@ -24,9 +24,9 @@ const WelcomePage = () => {
     try {
       const response = await authAPI.login(username, password);
       const { access_token, display_name } = response.data;
-      localStorage.setItem('authToken', access_token);
-      localStorage.setItem('username', username);
-      if (display_name) localStorage.setItem('displayName', display_name);
+      sessionStorage.setItem('authToken', access_token);
+      sessionStorage.setItem('username', username);
+      if (display_name) sessionStorage.setItem('displayName', display_name);
       toast.success('登录成功');
       navigate('/workspace');
     } catch (error) {

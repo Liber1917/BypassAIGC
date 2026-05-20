@@ -15,7 +15,7 @@ const api = axios.create({
 // 请求拦截器
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = sessionStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -33,8 +33,8 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('username');
+      sessionStorage.removeItem('authToken');
+      sessionStorage.removeItem('username');
       window.location.href = '/';
     }
     return Promise.reject(error);
@@ -126,7 +126,7 @@ export const optimizationAPI = {
       timeout: 15000, // 15秒超时
     }),
   getStreamUrl: (sessionId) => {
-    const token = localStorage.getItem('authToken');
+    const token = sessionStorage.getItem('authToken');
     const baseUrl = api.defaults.baseURL || '/api';
     return `${baseUrl}/optimization/sessions/${sessionId}/stream?token=${token}`;
   },
@@ -193,14 +193,14 @@ export const wordFormatterAPI = {
 
   // Download
   getDownloadUrl: (jobId) => {
-    const token = localStorage.getItem('authToken');
+    const token = sessionStorage.getItem('authToken');
     const baseUrl = api.defaults.baseURL || '/api';
     return `${baseUrl}/word-formatter/jobs/${jobId}/download?token=${token}`;
   },
 
   // SSE stream URL
   getStreamUrl: (jobId) => {
-    const token = localStorage.getItem('authToken');
+    const token = sessionStorage.getItem('authToken');
     const baseUrl = api.defaults.baseURL || '/api';
     return `${baseUrl}/word-formatter/jobs/${jobId}/stream?token=${token}`;
   },
@@ -231,7 +231,7 @@ export const wordFormatterAPI = {
 
   // Preprocess stream URL
   getPreprocessStreamUrl: (jobId) => {
-    const token = localStorage.getItem('authToken');
+    const token = sessionStorage.getItem('authToken');
     const baseUrl = api.defaults.baseURL || '/api';
     return `${baseUrl}/word-formatter/preprocess/${jobId}/stream?token=${token}`;
   },
