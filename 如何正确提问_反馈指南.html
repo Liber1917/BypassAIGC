@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>如何正确提问 &amp; 反馈指南 — AI 学术写作助手</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --accent: #2563eb;
+    --accent-light: #dbeafe;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --good: #059669;
+    --bad: #dc2626;
+    --warn: #d97706;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", "PingFang SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 0;
+  }
+  .hero {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #1d4ed8 100%);
+    color: white;
+    padding: 48px 24px;
+    text-align: center;
+  }
+  .hero h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 8px; }
+  .hero p { font-size: 1.05rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+  .container { max-width: 860px; margin: 0 auto; padding: 24px 20px 80px; }
+
+  /* TOC */
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 28px;
+  }
+  .toc h2 { font-size: 1rem; color: var(--text-secondary); margin-bottom: 10px; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin: 4px 0; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  /* Sections */
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+  .section h2 {
+    font-size: 1.35rem;
+    color: var(--accent);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--accent-light);
+  }
+  .section h3 { font-size: 1.05rem; margin: 16px 0 8px; }
+  .section p { margin: 8px 0; }
+  .section ul, .section ol { margin: 8px 0 8px 20px; }
+  .section li { margin: 4px 0; }
+
+  /* Callout boxes */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    font-size: 0.95rem;
+  }
+  .callout-tip { background: #ecfdf5; border-left: 4px solid var(--good); }
+  .callout-warn { background: #fef3c7; border-left: 4px solid var(--warn); }
+  .callout-bad { background: #fef2f2; border-left: 4px solid var(--bad); }
+  .callout-info { background: var(--accent-light); border-left: 4px solid var(--accent); }
+
+  /* Example cards */
+  .example-pair { margin: 12px 0; }
+  .example-bad, .example-good {
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 6px 0;
+    font-size: 0.93rem;
+  }
+  .example-bad {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+  }
+  .example-bad::before { content: "❌ 不好的提问："; font-weight: 600; color: var(--bad); display: block; margin-bottom: 4px; }
+  .example-good {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+  }
+  .example-good::before { content: "✅ 好的提问："; font-weight: 600; color: var(--good); display: block; margin-bottom: 4px; }
+
+  /* Template */
+  .template-box {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 18px 20px;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 12px 0;
+    white-space: pre-wrap;
+  }
+  .template-box .comment { color: #94a3b8; }
+  .template-box .label { color: #60a5fa; }
+  .template-box .required { color: #f87171; }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 1.6rem; }
+    .section { padding: 20px 16px; }
+    .container { padding: 16px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>📖 如何正确提问 &amp; 反馈指南</h1>
+  <p>给 AI 学术写作助手用户的一份实用指引——提出好问题，才能得到好答案</p>
+</div>
+
+<div class="container">
+
+<!-- TOC -->
+<div class="toc">
+  <h2>📑 目录</h2>
+  <ol>
+    <li><a href="#principles">提问的智慧——核心原则</a></li>
+    <li><a href="#before-ask">提问前，先做这四件事</a></li>
+    <li><a href="#how-to-ask">提问时，注意这五点</a></li>
+    <li><a href="#examples">好问题 vs 坏问题</a></li>
+    <li><a href="#template">📋 Bug 反馈模板（复制即用）</a></li>
+    <li><a href="#feature">📋 功能建议模板（复制即用）</a></li>
+    <li><a href="#github">🌐 在 GitHub 上提交 Issue</a></li>
+  </ol>
+</div>
+
+<!-- 1. 核心原则 -->
+<div class="section" id="principles">
+  <h2>一、提问的智慧——核心原则</h2>
+  <p>本指南基于 Eric S. Raymond 的经典文章 <strong>《How To Ask Questions The Smart Way》</strong>（《提问的智慧》）提炼而来。核心理念只有一句话：</p>
+  <div class="callout callout-tip">
+    <strong>尊重他人时间，证明你值得被帮助。</strong> 好的问题节省双方的时间，坏的问题浪费所有人的耐心。
+  </div>
+  <p>在技术社区和团队协作中，提问不是"索取"，而是一种<strong>合作</strong>。你准备得越充分，你得到的答案就越快、越准确。</p>
+</div>
+
+<!-- 2. 提问前 -->
+<div class="section" id="before-ask">
+  <h2>二、提问前，先做这四件事</h2>
+
+  <h3>① 自己搜索</h3>
+  <p>在问别人之前，先尝试自己找到答案。这是一个"证明你用过脑"的基本门槛。</p>
+  <ul>
+    <li>用搜索引擎搜索报错信息</li>
+    <li>翻阅 README / 使用文档 / FAQ</li>
+    <li>在已有 GitHub Issues 中搜索是否有人问过相同问题</li>
+    <li>查看程序日志（exe 同目录下的 <code>logs/</code> 文件夹）</li>
+  </ul>
+
+  <h3>② 自己排查</h3>
+  <ul>
+    <li>检查 .env 配置是否正确（API Key、端口等）</li>
+    <li>重启程序，看看问题是否复现</li>
+    <li>换个浏览器试试（排除缓存问题）</li>
+    <li>看看 <code>http://localhost:9800/docs</code> 后端 API 是否正常</li>
+  </ul>
+
+  <h3>③ 准备好信息</h3>
+  <p>把以下信息提前准备在手上，而不是等人问一句才补一句：</p>
+  <ul>
+    <li>程序版本（exe 文件名上的版本号/构建日期）</li>
+    <li>操作系统版本（Win 10 / Win 11 / macOS）</li>
+    <li>完整报错信息（截图或文本）</li>
+    <li>复现步骤</li>
+  </ul>
+
+  <h3>④ 表明你做过了什么</h3>
+  <p>在提问时明确写出你已经尝试过的操作，这能极大提高回答者帮助你的意愿。</p>
+  <div class="callout callout-info">
+    <strong>示例：</strong>"我已经搜索了 Issues，没有找到类似问题。我试过重启程序、重新配置 .env、换 Chrome 和 Edge 浏览器，但问题仍然存在。"
+  </div>
+</div>
+
+<!-- 3. 提问时 -->
+<div class="section" id="how-to-ask">
+  <h2>三、提问时，注意这五点</h2>
+
+  <h3>① 标题要清晰具体</h3>
+  <p>不要用「救命！」「急！求助！」这类标题。好的标题让回答者一眼就知道你在问什么。</p>
+  <div class="example-pair">
+    <div class="example-bad">程序出错了，求大神帮忙</div>
+    <div class="example-good">「论文生成」页面点击生成后无响应，浏览器 Console 报 net::ERR_CONNECTION_REFUSED</div>
+  </div>
+
+  <h3>② 描述症状，而不是猜测</h3>
+  <p>告诉别人 <strong>发生了什么</strong>，而不是你认为 <strong>为什么会这样</strong>。</p>
+  <div class="example-pair">
+    <div class="example-bad">是不是后端挂了？是不是 API Key 有问题？</div>
+    <div class="example-good">点击「保存」按钮后，页面弹出「500 Internal Server Error」，程序窗口的日志显示：<code>sqlalchemy.exc.OperationalError</code></div>
+  </div>
+
+  <h3>③ 提供复现步骤</h3>
+  <p>让别人能按你的描述一步一步重现问题。这是修复 Bug 最重要的信息。</p>
+  <div class="template-box"><span class="comment"># 复现步骤示例</span>
+1. 打开程序，访问 http://localhost:9800
+2. 点击右上角「管理后台」
+3. 输入管理员密码登录
+4. 点击「用户管理」→「创建用户」
+5. 填写用户名后点击「提交」
+6. <span style="color:#f87171;">页面报错："Failed to create user"</span></div>
+
+  <h3>④ 附上日志和截图</h3>
+  <p>一图胜千言，一段日志胜过十句描述。</p>
+  <ul>
+    <li>程序日志：exe 同目录下的 <code>logs/</code> 文件夹</li>
+    <li>浏览器日志：F12 → Console 面板 → 右键 → "Save as" 保存</li>
+    <li>截图：直接拖放图片到 Issue / 聊天窗口</li>
+  </ul>
+
+  <h3>⑤ 问题解决后，说一声</h3>
+  <p>在 Issue 或聊天中补充说明问题是如何解决的。这不仅帮助后来人，也是对所有帮助者的尊重。</p>
+  <div class="callout callout-tip">
+    <strong>示例：</strong>"已解决！原因是 .env 中 ADMIN_PASSWORD 包含特殊字符需要转义。谢谢大家的帮助！"
+  </div>
+</div>
+
+<!-- 4. 好 vs 坏 -->
+<div class="section" id="examples">
+  <h2>四、好问题 vs 坏问题 对比</h2>
+
+  <h3>场景：程序启动报错</h3>
+  <div class="example-pair">
+    <div class="example-bad">打不开，报错了，怎么办？</div>
+    <div class="example-good">双击 AI学术写作助手.exe 后，窗口一闪就关闭了。exe 同目录下 logs/ 目录中的日志最后几行是：<br><code>ERROR:root:Failed to bind to port 9800: Address already in use</code><br>我已经检查过没有其他程序占用 9800 端口，但仍无法启动。操作系统是 Windows 11，exe 版本是今天（2026-05-19）构建的。</div>
+  </div>
+
+  <h3>场景：功能异常</h3>
+  <div class="example-pair">
+    <div class="example-bad">论文生成功能用不了</div>
+    <div class="example-good">在我正在编辑的一篇约 5000 字的论文中，点击「生成摘要」按钮后，页面一直显示「正在生成...」，等了 5 分钟没有反应。我检查了浏览器 Console（附截图），没有报错信息。OPENAI_API_KEY 我已确认有效（在别的工具中可以正常使用），且网络可以访问 api.openai.com。</div>
+  </div>
+
+  <h3>❌ 不要问这些问题</h3>
+  <div class="callout callout-bad">
+    <ul>
+      <li>"谁有空？"—— 没人会主动认领</li>
+      <li>"急！在线等！"—— 着急不会让答案来得更快</li>
+      <li>"我的电脑有问题"—— 太模糊，无从下手</li>
+      <li>"代码太烂了"—— 不是在解决问题，是在发泄情绪</li>
+      <li>"能不能帮我做……"—— 请先展示你的努力</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 5. Bug 反馈模板 -->
+<div class="section" id="template">
+  <h2>五、📋 Bug 反馈模板（复制即用）</h2>
+  <p>当你在使用过程中遇到问题时，直接复制下面的模板，填写你的信息后发给开发者：</p>
+
+  <div class="template-box"><span class="comment">## 🐛 Bug 反馈</span>
+
+<span class="label">【问题描述】</span>
+（请用一两句话描述你遇到的问题）
+
+<span class="label">【复现步骤】</span>
+1. 
+2. 
+3. 
+
+<span class="label">【预期结果】</span>
+（你认为应该发生什么？）
+
+<span class="label">【实际结果】</span>
+（实际上发生了什么？）
+
+<span class="label">【日志 / 截图】</span>
+（请粘贴日志内容或拖放截图到这里）
+
+<span class="label">【程序版本】</span>
+（exe 版本号或构建日期）
+
+<span class="label">【操作系统】</span>
+（Windows 10/11 / macOS 版本号）
+
+<span class="label">【其他信息】</span>
+（网络环境、代理设置、特殊配置等）</div>
+</div>
+
+<!-- 6. 功能建议模板 -->
+<div class="section" id="feature">
+  <h2>六、📋 功能建议模板（复制即用）</h2>
+
+  <div class="template-box"><span class="comment">## 💡 功能建议</span>
+
+<span class="label">【背景 / 场景】</span>
+（在什么场景下遇到这个需求？当前有什么痛点？）
+
+<span class="label">【需求描述】</span>
+（你希望程序新增或改进什么功能？）
+
+<span class="label">【验收标准】</span>
+- [ ] 
+- [ ] 
+- [ ] 
+
+<span class="label">【优先级】</span>
+（P0-核心急需 / P1-重要 / P2-值得做 / P3-锦上添花）
+
+<span class="label">【参考示例】</span>
+（如果有同类产品的截图或链接，请附上）</div>
+</div>
+
+<!-- 7. GitHub -->
+<div class="section" id="github">
+  <h2>七、🌐 在 GitHub 上提交 Issue</h2>
+  <p>如果你有 GitHub 账号，直接在项目仓库提交 Issue 是最高效的方式：</p>
+  <ol>
+    <li>打开项目地址：<a href="https://github.com/Liber1917/BypassAIGC/issues/new/choose" target="_blank">https://github.com/Liber1917/BypassAIGC</a></li>
+    <li>选择「缺陷报告 / Bug Report」或「功能建议 / Feature Request」</li>
+    <li>按表单提示填写信息即可（带 * 的为必填）</li>
+    <li>提交后开发者会收到通知，定期处理</li>
+  </ol>
+  <div class="callout callout-info">
+    <strong>提示：</strong>提交前记得先搜索已有 Issues，避免重复。提交后可以通过后续评论补充更多信息。
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="text-align: center; color: var(--text-secondary); font-size: 0.9rem; margin-top: 40px; padding: 20px;">
+  <p>本文参考 <!--
+  -->Eric S. Raymond 的 <a href="https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way" target="_blank">How To Ask Questions The Smart Way</a>（《提问的智慧》）<!--
+  -->编写，祝大家提出好问题，获得好答案。</p>
+</div>
+
+</div>
+</body>
+</html>
