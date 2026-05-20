@@ -83,7 +83,7 @@ if settings.ADMIN_PASSWORD == "admin123":
 app = FastAPI(
     title="AI 论文润色增强系统",
     description="高质量论文润色与原创性学术表达增强",
-    version="1.0.0"
+    version="2.6.5"
 )
 
 # 添加 Gzip 压缩中间件以减少响应体积
