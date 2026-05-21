@@ -2,6 +2,8 @@ import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Type
 
+import asyncio
+
 from fastapi import APIRouter, Depends, Header, HTTPException, status, Request
 from pydantic import BaseModel
 from sqlalchemy import inspect, func, case
@@ -34,6 +36,8 @@ from app.utils.auth import (
 )
 from app.services.concurrency import concurrency_manager
 from app.word_formatter.services.job_manager import get_job_manager
+from app.routes.optimization import running_tasks
+from app.routes.optimization import running_tasks
 from app.utils.auth import (
     create_access_token,
     generate_access_link,
@@ -305,19 +309,27 @@ async def admin_stop_session(
     _: str = Depends(get_admin_from_token),
     db: Session = Depends(get_db)
 ):
-    """管理员停止会话"""
-    session = db.query(OptimizationSession).filter(
+    """管理员停止会话 — 取消后台任务并释放并发槽位"""
+    opt_session = db.query(OptimizationSession).filter(
         OptimizationSession.session_id == session_id
     ).first()
     
-    if not session:
+    if not opt_session:
         raise HTTPException(status_code=404, detail="会话不存在")
         
-    if session.status not in ["queued", "processing"]:
+    if opt_session.status not in ["queued", "processing"]:
         raise HTTPException(status_code=400, detail="只能停止排队中或处理中的会话")
         
-    session.status = "stopped"
-    session.error_message = "管理员手动停止"
+    # 取消后台运行中的 asyncio Task
+    task = running_tasks.pop(session_id, None)
+    if task and not task.done():
+        task.cancel()
+
+    # 释放并发槽位
+    await concurrency_manager.release(session_id)
+
+    opt_session.status = "stopped"
+    opt_session.error_message = "管理员手动停止"
     db.commit()
     
     return {"message": "会话已停止"}

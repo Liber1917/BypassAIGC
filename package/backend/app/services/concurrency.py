@@ -50,6 +50,8 @@ class ConcurrencyManager:
 
             if session_id not in self.queue:
                 self.queue.append(session_id)
+                if user_id is not None:
+                    self._session_user[session_id] = user_id
             
             start_time = datetime.utcnow()
             while session_id not in self.active_sessions and session_id in self.queue:

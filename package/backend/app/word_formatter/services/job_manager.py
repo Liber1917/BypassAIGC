@@ -299,6 +299,10 @@ class JobManager:
             return False
 
         if job.status in {JobStatus.PENDING, JobStatus.RUNNING}:
+            # 取消正在运行的任务，释放 semaphore 槽位
+            task = self._running_tasks.get(job_id)
+            if task and not task.done():
+                task.cancel()
             job.status = JobStatus.CANCELLED
             job.updated_at = datetime.now()
             return True
@@ -309,7 +313,7 @@ class JobManager:
         """Delete a job and its data. For RUNNING jobs, also cancels the asyncio task to release semaphore."""
         if job_id in self._jobs:
             job = self._jobs[job_id]
-            if job.status == JobStatus.RUNNING:
+            if job.status in {JobStatus.RUNNING, JobStatus.CANCELLED}:
                 # 取消正在运行的任务，释放 semaphore 槽位
                 task = self._running_tasks.get(job_id)
                 if task and not task.done():
