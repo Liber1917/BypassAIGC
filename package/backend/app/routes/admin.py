@@ -37,7 +37,6 @@ from app.utils.auth import (
 from app.services.concurrency import concurrency_manager
 from app.word_formatter.services.job_manager import get_job_manager
 from app.routes.optimization import running_tasks
-from app.routes.optimization import running_tasks
 from app.utils.auth import (
     create_access_token,
     generate_access_link,
