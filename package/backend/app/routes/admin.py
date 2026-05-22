@@ -799,6 +799,8 @@ async def get_user_sessions(
 
 @router.get("/config")
 async def get_config(_: str = Depends(get_admin_from_token)) -> Dict[str, Any]:
+    # 每次读取前重新加载 .env，确保 UI 显示最新值
+    reload_settings()
     return {
         "polish": {
             "model": settings.POLISH_MODEL,
