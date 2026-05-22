@@ -540,6 +540,13 @@ def main():
     except KeyboardInterrupt:
         print("\n\n[已停止] 服务已停止")
         sys.exit(0)
+    except OSError as e:
+        if "10048" in str(e) or "address already in use" in str(e).lower():
+            print(f"\n[错误] 端口 {port} 已被占用!")
+            print(f"请关闭其他占用该端口的程序后重试")
+            print(f"或修改 .env 文件中的 SERVER_PORT 配置使用其他端口")
+            sys.exit(1)
+        raise
 
 
 if __name__ == "__main__":
