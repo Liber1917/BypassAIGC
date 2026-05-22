@@ -64,7 +64,7 @@ from app.services.ai_service import get_default_polish_prompt, get_default_enhan
 # 检查默认密钥（仅警告，不退出）
 if settings.SECRET_KEY == "your-secret-key-change-this-in-production":
     print("\n" + "="*60)
-    print("⚠️  安全警告: 检测到默认 SECRET_KEY!")
+    print("[安全警告] 检测到默认 SECRET_KEY!")
     print("="*60)
     print("生产环境必须修改 SECRET_KEY,否则 JWT token 可被伪造!")
     print(f"请在 {ENV_FILE} 文件中设置强密钥:")
@@ -73,7 +73,7 @@ if settings.SECRET_KEY == "your-secret-key-change-this-in-production":
 
 if settings.ADMIN_PASSWORD == "admin123":
     print("\n" + "="*60)
-    print("⚠️  安全警告: 检测到默认管理员密码!")
+    print("[安全警告] 检测到默认管理员密码!")
     print("="*60)
     print("生产环境必须修改 ADMIN_PASSWORD!")
     print(f"请在 {ENV_FILE} 文件中设置强密码 (建议12位以上)")
@@ -123,10 +123,10 @@ app.include_router(word_formatter_router, prefix="/api")
 @app.on_event("startup")
 async def startup_event():
     """启动时初始化"""
-    print(f"\n📁 应用目录: {APP_DIR}")
-    print(f"📁 配置文件: {ENV_FILE}")
-    print(f"📁 数据库文件: {DB_FILE}")
-    print(f"📁 静态文件目录: {STATIC_DIR}")
+    print(f"\n[应用目录] {APP_DIR}")
+    print(f"[配置文件] {ENV_FILE}")
+    print(f"[数据库文件] {DB_FILE}")
+    print(f"[静态文件目录] {STATIC_DIR}")
     
     # 初始化数据库
     init_db()
@@ -437,7 +437,7 @@ def open_browser(port: int):
     """延迟打开浏览器"""
     time.sleep(2)  # 等待服务器启动
     url = f"http://localhost:{port}"
-    print(f"\n🌐 正在打开浏览器: {url}")
+    print(f"\n[打开浏览器] {url}")
     webbrowser.open(url)
 
 
@@ -501,7 +501,7 @@ SEGMENT_SKIP_THRESHOLD=15
 """
         with open(ENV_FILE, 'w', encoding='utf-8') as f:
             f.write(sample_content)
-        print(f"✅ 已创建示例配置文件: {ENV_FILE}")
+        print(f"[完成] 已创建示例配置文件: {ENV_FILE}")
         print("   请编辑此文件，填入您的 API Key 和其他配置")
 
 
@@ -511,15 +511,15 @@ def main():
     host = settings.SERVER_HOST
     
     print("\n" + "="*60)
-    print("🚀 AI 学术写作助手 - 启动中...")
+    print("[启动] AI 学术写作助手 - 启动中...")
     print("="*60)
     
     # 创建示例配置文件
     create_sample_env()
     
-    print(f"\n📍 服务地址: http://{host}:{port}")
-    print(f"📍 管理后台: http://{host}:{port}/admin")
-    print(f"📍 API 文档: http://{host}:{port}/docs")
+    print(f"\n[服务地址] http://{host}:{port}")
+    print(f"[管理后台] http://{host}:{port}/admin")
+    print(f"[API 文档] http://{host}:{port}/docs")
     print("\n按 Ctrl+C 停止服务")
     print("="*60 + "\n")
     
@@ -538,7 +538,7 @@ def main():
             access_log=True
         )
     except KeyboardInterrupt:
-        print("\n\n👋 服务已停止")
+        print("\n\n[已停止] 服务已停止")
         sys.exit(0)
 
 
