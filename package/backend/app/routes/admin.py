@@ -883,6 +883,12 @@ async def update_config(
         except ValueError:
             pass
 
+    if "MAX_CONCURRENT_PER_USER" in updates:
+        try:
+            await concurrency_manager.update_per_user_limit(int(updates["MAX_CONCURRENT_PER_USER"]))
+        except ValueError:
+            pass
+
     return {"message": "配置已更新并保存", "updated_keys": list(updates.keys())}
 
 

@@ -121,6 +121,18 @@ class ConcurrencyManager:
             self._activate_waiting_locked()
             self._condition.notify_all()  # 唤醒所有等待者以检查新的限制
 
+    async def update_per_user_limit(self, new_limit: int):
+        """更新每用户并发限制"""
+        async with self._condition:
+            self.max_per_user = max(1, new_limit)
+            # 检查当前活跃用户是否超过新限制
+            for user_id in list(self.active_per_user.keys()):
+                if self.active_per_user[user_id] > self.max_per_user:
+                    # 用户超过限制，保留 max_per_user 个，多余的标记为可释放
+                    pass  # 等待队列中的后续 session 会被 _activate_waiting_locked 的 per_user 检查挡住
+            self._activate_waiting_locked()
+            self._condition.notify_all()
+
     def _activate_waiting_locked(self):
         """尝试为等待队列中的会话分配执行权限 (需持有锁)"""
         while self.queue and len(self.active_sessions) < self.max_concurrent:
