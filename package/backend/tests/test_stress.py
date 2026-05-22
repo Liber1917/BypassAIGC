@@ -26,7 +26,6 @@ async def _acquire_no_wait(mgr, session_id, user_id=None):
                 mgr._session_user[session_id] = user_id
             return True
 
-        # 加到队列但不等待
         if session_id not in mgr.queue:
             mgr.queue.append(session_id)
             if user_id is not None:
@@ -48,7 +47,6 @@ class TestStressConcurrency:
         async def run():
             r1 = await _acquire_no_wait(mgr, "s1", user_id=42)
             assert r1 == True, "First should acquire immediately"
-
             r2 = await _acquire_no_wait(mgr, "s2", user_id=42)
             assert r2 == False, "Second should queue"
             assert mgr.get_active_count() == 1
@@ -62,7 +60,6 @@ class TestStressConcurrency:
             await _acquire_no_wait(mgr, "s1", user_id=42)
             await _acquire_no_wait(mgr, "s2", user_id=42)
             assert len(mgr.queue) == 1
-
             await mgr.release("s1")
             assert mgr.get_active_count() == 1
             assert len(mgr.queue) == 0
@@ -81,25 +78,22 @@ class TestStressConcurrency:
         asyncio.run(run())
 
     def test_three_different_users(self, mgr):
-        """3个不同用户, per_user=1, 各1个槽位, 共3个活跃"""
+        """3个不同用户, per_user=1, 各1个槽位"""
         async def run():
             for i in range(3):
-                r = await _acquire_no_wait(mgr, f"s{i}", user_id=i)
-                assert r == True, f"User {i} should acquire"
+                assert await _acquire_no_wait(mgr, f"s{i}", user_id=i)
             assert mgr.get_active_count() == 3
             assert len(mgr.queue) == 0
         asyncio.run(run())
 
     def test_release_activates_queued_under_per_user_limit(self, mgr):
-        """per_user=2时释放, 排队中的同用户被激活"""
+        """per_user=2时释放, 排队中同用户被激活"""
         async def run():
             mgr.max_per_user = 2
             await _acquire_no_wait(mgr, "s1", user_id=42)
             await _acquire_no_wait(mgr, "s2", user_id=42)
-            r3 = await _acquire_no_wait(mgr, "s3", user_id=42)
-            assert r3 == False  # queued
+            assert await _acquire_no_wait(mgr, "s3", user_id=42) == False
             assert mgr.get_active_count() == 2
-
             await mgr.release("s1")
             assert mgr.get_active_count() == 2
             assert mgr.active_per_user.get(42) == 2
@@ -107,21 +101,17 @@ class TestStressConcurrency:
         asyncio.run(run())
 
     def test_release_blocks_if_same_user_at_limit(self, mgr):
-        """per_user=1时释放一个, 排队中同用户不应被激活（FIFO排队顺序）"""
+        """per_user=1时释放一个, 排队中同用户不被激活（FIFO）"""
         async def run():
             await _acquire_no_wait(mgr, "a1", user_id=1)
             await _acquire_no_wait(mgr, "b1", user_id=2)
-            await _acquire_no_wait(mgr, "a2", user_id=1)  # queued (per_user[1]=1)
-            await _acquire_no_wait(mgr, "b2", user_id=2)  # queued (per_user[2]=1)
-
-            assert mgr.get_active_count() == 2  # a1 + b1
-            assert len(mgr.queue) == 2  # [a2 (user1满), b2 (user2)]
-
-            # 释放 b1 → _activate 检查 a2(user=1) → per_user=1 >= 1 → break (FIFO)
-            # a2 排在 b2 前面, 必须等用户1释放槽位后先处理 a2
+            await _acquire_no_wait(mgr, "a2", user_id=1)
+            await _acquire_no_wait(mgr, "b2", user_id=2)
+            assert mgr.get_active_count() == 2
+            assert len(mgr.queue) == 2
             await mgr.release("b1")
-            assert mgr.get_active_count() == 1  # 只有 a1 (b1 释放后 a2 不能激活, b2 被挡住)
-            assert len(mgr.queue) == 2  # a2, b2 都还在排队
+            assert mgr.get_active_count() == 1
+            assert len(mgr.queue) == 2
         asyncio.run(run())
 
     def test_high_frequency_no_leak(self, mgr):
@@ -139,10 +129,9 @@ class TestStressConcurrency:
         async def run():
             acquired = 0
             for i in range(10):
-                r = await _acquire_no_wait(mgr, f"s{i}", user_id=i)
-                if r:
+                if await _acquire_no_wait(mgr, f"s{i}", user_id=i):
                     acquired += 1
-            assert acquired == 5, f"Expected 5 acquired, got {acquired}"
+            assert acquired == 5
             assert mgr.get_active_count() == 5
             assert len(mgr.queue) == 5
         asyncio.run(run())
@@ -154,13 +143,11 @@ class TestStressConcurrency:
             await _acquire_no_wait(mgr, "s1", user_id=1)
             await _acquire_no_wait(mgr, "s2", user_id=1)
             await _acquire_no_wait(mgr, "s3", user_id=1)
-            await _acquire_no_wait(mgr, "s4", user_id=1)  # queued
+            await _acquire_no_wait(mgr, "s4", user_id=1)
             assert mgr.get_active_count() == 3
-
             mgr.max_per_user = 1
-            assert mgr.get_active_count() == 3  # 活跃不受影响
+            assert mgr.get_active_count() == 3
             await mgr.release("s1")
-            # s4 不应被激活
             assert mgr.get_active_count() == 2
             assert mgr.active_per_user.get(1) == 2
         asyncio.run(run())
@@ -168,22 +155,79 @@ class TestStressConcurrency:
     def test_delete_queued_does_not_activate_other(self, mgr):
         """删除排队中的任务, 不应导致另一个排队任务被激活"""
         async def run():
-            # 设置: a1 活跃, a2 排队, a3 排队
             await _acquire_no_wait(mgr, "a1", user_id=1)
-            await _acquire_no_wait(mgr, "a2", user_id=1)  # queued
-            await _acquire_no_wait(mgr, "a3", user_id=1)  # queued
-
-            # 验证初始状态
+            await _acquire_no_wait(mgr, "a2", user_id=1)
+            await _acquire_no_wait(mgr, "a3", user_id=1)
             assert mgr.get_active_count() == 1
-            assert len(mgr.queue) == 2  # a2, a3
+            assert len(mgr.queue) == 2
             assert mgr.active_per_user.get(1) == 1
-
-            # 删除 a2 (排队中) — 模拟 DELETE /sessions
             await mgr.release("a2")
-
-            # a3 不应被激活! active_per_user[1] 仍为 1
-            assert mgr.get_active_count() == 1, f"Expected 1 active, got {mgr.get_active_count()}"
-            assert len(mgr.queue) == 1, f"Expected 1 queued, got {len(mgr.queue)}"
+            assert mgr.get_active_count() == 1
+            assert len(mgr.queue) == 1
             assert mgr.queue[0] == "a3"
             assert mgr.active_per_user.get(1) == 1
+        asyncio.run(run())
+
+    def test_release_nonexistent_session_is_safe(self, mgr):
+        """释放不存在的 session 不报错, 状态不变"""
+        async def run():
+            await _acquire_no_wait(mgr, "s1", user_id=1)
+            await _acquire_no_wait(mgr, "s2", user_id=1)
+            await mgr.release("nonexistent")
+            assert mgr.get_active_count() == 1
+            assert mgr.active_per_user.get(1) == 1
+        asyncio.run(run())
+
+    def test_double_release_same_session(self, mgr):
+        """对同一个活跃 session release 两次 → 第二次无影响"""
+        async def run():
+            await _acquire_no_wait(mgr, "s1", user_id=1)
+            await mgr.release("s1")
+            await mgr.release("s1")
+            assert mgr.get_active_count() == 0
+            assert mgr.active_per_user.get(1, 0) == 0
+        asyncio.run(run())
+
+    def test_boundary_max_concurrent_1(self, mgr):
+        """max_concurrent=1 → 即使不同用户也排队"""
+        async def run():
+            mgr.max_concurrent = 1
+            mgr.max_per_user = 1
+            await _acquire_no_wait(mgr, "s1", user_id=1)
+            r2 = await _acquire_no_wait(mgr, "s2", user_id=2)
+            assert r2 == False
+            assert mgr.get_active_count() == 1
+            assert len(mgr.queue) == 1
+        asyncio.run(run())
+
+    def test_large_scale_1000_operations(self, mgr):
+        """1000 次 acquire/release 循环, 无泄漏"""
+        async def run():
+            for i in range(1000):
+                assert await _acquire_no_wait(mgr, "s", user_id=i % 10)
+                await mgr.release("s")
+            assert mgr.get_active_count() == 0
+            assert len(mgr._session_user) == 0
+        asyncio.run(run())
+
+    def test_large_queue_100_sessions(self, mgr):
+        """100 个排队后逐个释放, FIFO 正确"""
+        async def run():
+            for i in range(5):
+                assert await _acquire_no_wait(mgr, f"a{i}", user_id=i)
+            for i in range(100):
+                await _acquire_no_wait(mgr, f"q{i}", user_id=i + 100)
+            assert len(mgr.queue) == 100
+            for i in range(5):
+                await mgr.release(f"a{i}")
+            assert mgr.get_active_count() == 5
+            assert len(mgr.queue) == 95
+        asyncio.run(run())
+
+    def test_anonymous_session_not_limited_by_per_user(self, mgr):
+        """user_id=None 的 session 不受 per_user 限制"""
+        async def run():
+            for i in range(5):
+                assert await _acquire_no_wait(mgr, f"s{i}", user_id=None)
+            assert mgr.get_active_count() == 5
         asyncio.run(run())
