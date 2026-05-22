@@ -3,6 +3,11 @@ import tempfile
 import pytest
 from pathlib import Path
 
+from dotenv import load_dotenv
+_ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
+if _ENV_PATH.exists():
+    load_dotenv(_ENV_PATH)
+
 TEST_DB_DIR = Path(tempfile.mkdtemp(prefix="bypass_aigc_test_"))
 TEST_DB_PATH = TEST_DB_DIR / "test.db"
 
@@ -10,15 +15,6 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 os.environ["SECRET_KEY"] = "test-secret-key-for-development-only"
 os.environ["ADMIN_PASSWORD"] = "admin123"
 os.environ["ADMIN_USERNAME"] = "admin"
-os.environ["POLISH_MODEL"] = "gpt-4"
-os.environ["POLISH_API_KEY"] = "sk-test"
-os.environ["POLISH_BASE_URL"] = "https://api.openai.com/v1"
-os.environ["ENHANCE_MODEL"] = "gpt-4"
-os.environ["ENHANCE_API_KEY"] = "sk-test"
-os.environ["ENHANCE_BASE_URL"] = "https://api.openai.com/v1"
-os.environ["COMPRESSION_MODEL"] = "gpt-4"
-os.environ["COMPRESSION_API_KEY"] = "sk-test"
-os.environ["COMPRESSION_BASE_URL"] = "https://api.openai.com/v1"
 os.environ["MAX_CONCURRENT_USERS"] = "5"
 os.environ["MAX_CONCURRENT_PER_USER"] = "3"
 os.environ["API_REQUEST_INTERVAL"] = "0"
