@@ -33,7 +33,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [adminToken, setAdminToken] = useState(localStorage.getItem('adminToken'));
+  const [adminToken, setAdminToken] = useState(sessionStorage.getItem('adminToken'));
   
   // Tab state
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -95,7 +95,7 @@ const AdminDashboard = () => {
       setIsAuthenticated(true);
       fetchUsers();
     } catch (error) {
-      localStorage.removeItem('adminToken');
+      sessionStorage.removeItem('adminToken');
       setAdminToken(null);
       setIsAuthenticated(false);
     }
@@ -112,7 +112,7 @@ const AdminDashboard = () => {
       });
 
       const { access_token } = response.data;
-      localStorage.setItem('adminToken', access_token);
+      sessionStorage.setItem('adminToken', access_token);
       setAdminToken(access_token);
       setIsAuthenticated(true);
       toast.success('登录成功！');
@@ -125,7 +125,7 @@ const AdminDashboard = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
+    sessionStorage.removeItem('adminToken');
     setAdminToken(null);
     setIsAuthenticated(false);
     setUsername('');
