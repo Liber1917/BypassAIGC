@@ -164,3 +164,26 @@ class TestStressConcurrency:
             assert mgr.get_active_count() == 2
             assert mgr.active_per_user.get(1) == 2
         asyncio.run(run())
+
+    def test_delete_queued_does_not_activate_other(self, mgr):
+        """删除排队中的任务, 不应导致另一个排队任务被激活"""
+        async def run():
+            # 设置: a1 活跃, a2 排队, a3 排队
+            await _acquire_no_wait(mgr, "a1", user_id=1)
+            await _acquire_no_wait(mgr, "a2", user_id=1)  # queued
+            await _acquire_no_wait(mgr, "a3", user_id=1)  # queued
+
+            # 验证初始状态
+            assert mgr.get_active_count() == 1
+            assert len(mgr.queue) == 2  # a2, a3
+            assert mgr.active_per_user.get(1) == 1
+
+            # 删除 a2 (排队中) — 模拟 DELETE /sessions
+            await mgr.release("a2")
+
+            # a3 不应被激活! active_per_user[1] 仍为 1
+            assert mgr.get_active_count() == 1, f"Expected 1 active, got {mgr.get_active_count()}"
+            assert len(mgr.queue) == 1, f"Expected 1 queued, got {len(mgr.queue)}"
+            assert mgr.queue[0] == "a3"
+            assert mgr.active_per_user.get(1) == 1
+        asyncio.run(run())

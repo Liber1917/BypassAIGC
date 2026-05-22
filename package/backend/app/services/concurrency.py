@@ -70,19 +70,21 @@ class ConcurrencyManager:
     async def release(self, session_id: str):
         """释放执行权限"""
         async with self._condition:
+            was_active = session_id in self.active_sessions
             user_id = self._session_user.pop(session_id, None)
-            if user_id is not None:
+            if user_id is not None and was_active:
                 count = self.active_per_user.get(user_id, 0) - 1
                 if count <= 0:
                     self.active_per_user.pop(user_id, None)
                 else:
                     self.active_per_user[user_id] = count
-            if session_id in self.active_sessions:
+            if was_active:
                 del self.active_sessions[session_id]
             if session_id in self.queue:
                 self.queue.remove(session_id)
-            self._activate_waiting_locked()
-            self._condition.notify_all()
+            if was_active:
+                self._activate_waiting_locked()
+                self._condition.notify_all()
     
     async def get_status(self, session_id: Optional[str] = None) -> Dict:
         """获取队列状态"""
