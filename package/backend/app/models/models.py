@@ -1,8 +1,13 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey, Float
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import Base
 from app.config import settings
+
+
+def _utcnow() -> datetime:
+    """返回当前 UTC 时间（替代已废弃的 datetime.utcnow）"""
+    return datetime.now(timezone.utc)
 
 
 class User(Base):
@@ -16,7 +21,7 @@ class User(Base):
     card_key = Column(String(255), unique=True, index=True, nullable=True)
     access_link = Column(String(255), unique=True, index=True, nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow)
     last_used = Column(DateTime, nullable=True)
     usage_limit = Column(Integer, default=0)  # 0 = 无限制
     usage_count = Column(Integer, default=0)
@@ -39,8 +44,8 @@ class CustomPrompt(Base):
     is_default = Column(Boolean, default=False)
     is_system = Column(Boolean, default=False)  # 系统预设提示词
     is_active = Column(Boolean, default=True)  # 是否启用
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     
     # 关系
     user = relationship("User", back_populates="prompts")
@@ -61,8 +66,8 @@ class OptimizationSession(Base):
     total_segments = Column(Integer, default=0)  # 总段落数
     error_message = Column(Text, nullable=True)
     failed_segment_index = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow, index=True)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     completed_at = Column(DateTime, nullable=True)
     
     # 模型配置
@@ -103,7 +108,7 @@ class OptimizationSegment(Base):
     enhanced_text = Column(Text, nullable=True)
     status = Column(String(50), index=True)  # 'pending', 'processing', 'completed', 'failed'
     is_title = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow)
     completed_at = Column(DateTime, nullable=True)
     
     # 关系
@@ -120,7 +125,7 @@ class SessionHistory(Base):
     history_data = Column(Text)  # JSON格式的历史会话
     is_compressed = Column(Boolean, default=False)
     character_count = Column(Integer, default=0)  # 汉字数量
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow)
     
     # 关系
     session = relationship("OptimizationSession", back_populates="history")
@@ -137,7 +142,7 @@ class ChangeLog(Base):
     before_text = Column(Text)
     after_text = Column(Text)
     changes_detail = Column(Text)  # JSON格式的详细变更
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow)
 
 
 class QueueStatus(Base):
@@ -149,7 +154,7 @@ class QueueStatus(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     position = Column(Integer)  # 队列位置
     status = Column(String(50))  # 'queued' 或 'processing'
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow)
     started_at = Column(DateTime, nullable=True)
 
 
@@ -160,7 +165,7 @@ class SystemSetting(Base):
     id = Column(Integer, primary_key=True, index=True)
     key = Column(String(100), unique=True, nullable=False)
     value = Column(String(255), nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 
 class SavedSpec(Base):
@@ -172,8 +177,8 @@ class SavedSpec(Base):
     name = Column(String(100), nullable=False)
     description = Column(String(500), nullable=True)
     spec_json = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
     # 关系
     user = relationship("User", back_populates="saved_specs")

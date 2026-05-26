@@ -41,11 +41,11 @@ jobs:
           DIFF: ${{ steps.diff.outputs.diff }}
         run: |
           if [ -z "$DEEPSEEK_API_KEY" ]; then
-            echo "review=DEEPSEEK_API_KEY not configured" >> $GITHUB_OUTPUT
+            echo "review not configured" > /tmp/review.txt
             exit 0
           fi
           if [ -z "$DIFF" ]; then
-            echo "review=No diff to review" >> $GITHUB_OUTPUT
+            echo "no diff to review" > /tmp/review.txt
             exit 0
           fi
 
@@ -55,7 +55,7 @@ jobs:
 
           ### P0 (必须修复)
           - SSE 路由中 ?token= 参数是否被 Depends() 提前 401 导致无法到达？
-          - print()/logging 中是否有 emoji 字符？(⚠️ ✅ ❌ 🚀 🛑)
+          - print()/logging 中是否有 emoji 字符？
           - Query(None) 声明的参数在 get_current_user() 调用中是否缺失？
           - localStroage 是否被使用（必须用 sessionStorage）？
 
@@ -88,7 +88,7 @@ jobs:
             -H "Authorization: Bearer ${DEEPSEEK_API_KEY}" \
             -d "$REQUEST_BODY")
 
-          REVIEW_TEXT=$(echo "$RESPONSE" | python3 -c "
+          echo "$RESPONSE" | python3 -c "
           import sys, json
           data = json.load(sys.stdin)
           try:
@@ -97,23 +97,20 @@ jobs:
           except Exception as e:
               print(f'Review parse failed: {e}')
               import sys; sys.stderr.write(json.dumps(data, indent=2)[:500])
-          " 2>/dev/null || echo "Review parse failed")
-
-          echo "review<<EOF" >> $GITHUB_OUTPUT
-          echo "$REVIEW_TEXT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          " > /tmp/review.txt 2>/dev/null
 
       - name: Post Review Comment
         uses: actions/github-script@v7
         with:
           script: |
-            const review = `${{ steps.ai_review.outputs.review }}`;
-            if (!review || review.includes('not configured') || !context.issue.number) {
-              if (!context.issue.number) console.log('Not a PR - skipping comment');
+            const fs = require('fs');
+            const review = fs.readFileSync('/tmp/review.txt', 'utf8').trim();
+            if (!review || review.includes('not configured') || review.includes('no diff') || !context.issue.number) {
+              if (!context.issue.number) console.log('Not a PR - skipping');
               else console.log('Review skipped:', review);
               return;
             }
-            const body = `## AI Code Review\n\n${review}\n\n---\n*Reviewed by DeepSeek*`;
+            const body = '## AI Code Review\n\n' + review + '\n\n---\n*Reviewed by DeepSeek*';
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
