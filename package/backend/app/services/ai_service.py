@@ -398,7 +398,7 @@ class AIService:
                 print("[AI RESPONSE] Raw Content Length:", len(raw_content), flush=True)
                 print("[AI RESPONSE] Filtered Content Length:", len(filtered_content), flush=True)
                 if raw_content != filtered_content:
-                    print("[AI RESPONSE] ⚠️  Thinking tags detected and removed", flush=True)
+                    print("[AI RESPONSE] [安全警告]  Thinking tags detected and removed", flush=True)
                 print("[AI RESPONSE] Content:", flush=True)
                 print(filtered_content, flush=True)
                 print("="*80 + "\n", flush=True)

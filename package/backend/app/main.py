@@ -51,7 +51,7 @@ class CacheControlMiddleware(BaseHTTPMiddleware):
 # 检查默认密钥 - 仅警告，不退出（允许开发环境使用）
 if settings.SECRET_KEY == "your-secret-key-change-this-in-production":
     print("\n" + "="*60)
-    print("⚠️  安全警告: 检测到默认 SECRET_KEY!")
+    print("[安全警告]  安全警告: 检测到默认 SECRET_KEY!")
     print("="*60)
     print("生产环境必须修改 SECRET_KEY,否则 JWT token 可被伪造!")
     print("请在 .env 文件中设置强密钥:")
@@ -61,7 +61,7 @@ if settings.SECRET_KEY == "your-secret-key-change-this-in-production":
 
 if settings.ADMIN_PASSWORD == "admin123":
     print("\n" + "="*60)
-    print("⚠️  安全警告: 检测到默认管理员密码!")
+    print("[安全警告]  安全警告: 检测到默认管理员密码!")
     print("="*60)
     print("生产环境必须修改 ADMIN_PASSWORD!")
     print("请在 .env 文件中设置强密码 (建议12位以上)")

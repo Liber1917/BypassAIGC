@@ -318,7 +318,7 @@ class JobManager:
                 task = self._running_tasks.get(job_id)
                 if task and not task.done():
                     task.cancel()
-                    print(f"[WORD-FORMATTER] 🛑 取消运行中的任务 job_id={job_id[:8]}...", flush=True)
+                    print(f"[WORD-FORMATTER] [停止] 取消运行中的任务 job_id={job_id[:8]}...", flush=True)
             del self._jobs[job_id]
             if job_id in self._job_locks:
                 del self._job_locks[job_id]
@@ -445,7 +445,7 @@ class JobManager:
         for job_id, task in list(self._running_tasks.items()):
             if not task.done():
                 task.cancel()
-                print(f"[WORD-FORMATTER] 🛑 关闭时取消任务 job_id={job_id[:8]}...", flush=True)
+                print(f"[WORD-FORMATTER] [停止] 关闭时取消任务 job_id={job_id[:8]}...", flush=True)
 
         # 等待任务取消完成（可选，防止立即清理）
         if self._running_tasks:

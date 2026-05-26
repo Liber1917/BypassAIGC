@@ -742,7 +742,7 @@ async def ai_identify_paragraph_types(
     except json.JSONDecodeError as e:
         # JSON 解析失败时回退到规则识别
         print("=" * 80, flush=True)
-        print(f"[WORD-FORMATTER] ⚠️ AI 识别 JSON 解析失败: {e}", flush=True)
+        print(f"[WORD-FORMATTER] [安全警告] AI 识别 JSON 解析失败: {e}", flush=True)
         print(f"[WORD-FORMATTER] 原始响应内容: {response[:500] if 'response' in dir() else 'N/A'}...", flush=True)
         print("[WORD-FORMATTER] 回退到规则识别模式", flush=True)
         print("=" * 80 + "\n", flush=True)
@@ -751,7 +751,7 @@ async def ai_identify_paragraph_types(
         # AI 识别失败时回退到规则识别
         import traceback
         print("=" * 80, flush=True)
-        print(f"[WORD-FORMATTER] ⚠️ AI 识别失败: {e}", flush=True)
+        print(f"[WORD-FORMATTER] [安全警告] AI 识别失败: {e}", flush=True)
         print(f"[WORD-FORMATTER] 异常类型: {type(e).__name__}", flush=True)
         print(f"[WORD-FORMATTER] 堆栈跟踪:\n{traceback.format_exc()}", flush=True)
         print("[WORD-FORMATTER] 回退到规则识别模式", flush=True)

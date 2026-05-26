@@ -362,7 +362,7 @@ async def generate_spec(
 
         increment_usage(user, db)
 
-        print(f"[WORD-FORMATTER] ✅ 规范生成成功: {spec.meta.get('name', 'AI_Generated')}", flush=True)
+        print(f"[WORD-FORMATTER] [成功] 规范生成成功: {spec.meta.get('name', 'AI_Generated')}", flush=True)
         print(f"[WORD-FORMATTER] ===========================================\n", flush=True)
 
         return {
@@ -371,7 +371,7 @@ async def generate_spec(
             "spec_name": spec.meta.get("name", "AI_Generated"),
         }
     except Exception as e:
-        print(f"[WORD-FORMATTER] ❌ 规范生成失败: {e}", flush=True)
+        print(f"[WORD-FORMATTER] [失败] 规范生成失败: {e}", flush=True)
         print(f"[WORD-FORMATTER] ===========================================\n", flush=True)
         raise HTTPException(status_code=500, detail=f"生成规范失败: {str(e)}")
 
@@ -1194,7 +1194,7 @@ async def format_check_text(
         # Perform format check
         result = check_format(request.text, mode=request.mode)
 
-        print(f"[WORD-FORMATTER] ✅ 格式检测完成", flush=True)
+        print(f"[WORD-FORMATTER] [成功] 格式检测完成", flush=True)
         print(f"[WORD-FORMATTER] 是否通过: {result.is_valid}", flush=True)
         print(f"[WORD-FORMATTER] 问题数量: {len(result.issues)}", flush=True)
         print(f"[WORD-FORMATTER] 段落数量: {len(result.paragraphs)}", flush=True)
@@ -1235,7 +1235,7 @@ async def format_check_text(
         )
 
     except Exception as e:
-        print(f"[WORD-FORMATTER] ❌ 格式检测失败: {e}", flush=True)
+        print(f"[WORD-FORMATTER] [失败] 格式检测失败: {e}", flush=True)
         print(f"[WORD-FORMATTER] ===========================================\n", flush=True)
         raise HTTPException(status_code=500, detail=f"格式检测失败: {str(e)}")
 
@@ -1305,7 +1305,7 @@ async def format_check_file(
         # Perform format check
         result = check_format(text, mode=mode)
 
-        print(f"[WORD-FORMATTER] ✅ 文件格式检测完成", flush=True)
+        print(f"[WORD-FORMATTER] [成功] 文件格式检测完成", flush=True)
         print(f"[WORD-FORMATTER] 是否通过: {result.is_valid}", flush=True)
         print(f"[WORD-FORMATTER] 问题数量: {len(result.issues)}", flush=True)
         print(f"[WORD-FORMATTER] ===========================================\n", flush=True)
@@ -1345,6 +1345,6 @@ async def format_check_file(
         )
 
     except Exception as e:
-        print(f"[WORD-FORMATTER] ❌ 文件格式检测失败: {e}", flush=True)
+        print(f"[WORD-FORMATTER] [失败] 文件格式检测失败: {e}", flush=True)
         print(f"[WORD-FORMATTER] ===========================================\n", flush=True)
         raise HTTPException(status_code=500, detail=f"格式检测失败: {str(e)}")

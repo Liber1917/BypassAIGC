@@ -43,7 +43,7 @@ def init_db():
         print("[OK] 数据库初始化成功")
         return True
     except Exception as e:
-        print(f"✗ 数据库初始化失败: {str(e)}")
+        print(f"[失败] 数据库初始化失败: {str(e)}")
         raise
 
 
@@ -112,7 +112,7 @@ def _add_performance_indexes():
                     pass
     
     except Exception as e:
-        print(f"  ⚠ 添加性能索引警告: {str(e)}")
+        print(f"  [警告] 添加性能索引警告: {str(e)}")
         # 失败不应该阻止应用启动
 
 
@@ -258,5 +258,5 @@ def _migrate_database_schema():
                             print("  [OK] 添加字段: custom_prompts.is_active")
     
     except Exception as e:
-        print(f"  ⚠ 数据库迁移警告: {str(e)}")
+        print(f"  [警告] 数据库迁移警告: {str(e)}")
         # 迁移失败不应该阻止应用启动
