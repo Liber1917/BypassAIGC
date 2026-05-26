@@ -30,3 +30,8 @@
 - 禁止在 `Depends()` 后面跟不可达的 `if token` 判断
 - 禁止使用 `pass` 代替 `raise NotImplementedError` 或实际实现
 - 禁止 hardcode 版本号不一致（保持 `package/main.py` / `frontend/package.json` / `backend/main.py` 同步）
+
+## Python 规范
+- 遵循 isort + black 导包规范：标准库 → 第三方 → 本地模块
+- 禁止使用已废弃 API：`datetime.utcnow()` → `datetime.now(datetime.UTC)`，`@app.on_event` → lifespan handlers
+- 所有 print() 日志必须前缀命名空间，如 `[WORD-FORMATTER]`, `[AI]`, `[DB]`

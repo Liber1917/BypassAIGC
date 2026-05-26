@@ -11,6 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install isort
+        run: pip install isort
+
       - name: Check for GBK-unsafe emoji in Python files
         run: |
           BAD=$(grep -rn '⚠️\|✅\|❌\|🛑\|🚀\|🌐\|✓\|✗\|👋' \
@@ -38,5 +45,31 @@ jobs:
           BAD=$(grep -B5 "if token and not" package/backend/app/routes/optimization.py 2>/dev/null || true)
           if [ -n "$BAD" ]; then
             echo "::warning::Possible dead code: SSE token check after Depends"
+            echo "$BAD"
+          fi
+
+      - name: Check import order (isort)
+        run: |
+          cd package/backend
+          isort --check-only app/ --diff --profile black 2>&1 \
+            | head -60 || true
+          # 只警告不阻止（避免一次 PR 修太多文件）
+          echo "::warning::Import ordering issues may exist. Run 'isort app/' locally to fix."
+
+      - name: Check for deprecated utcnow()
+        run: |
+          BAD=$(grep -rn "utcnow\|utcfromtimestamp" \
+            --include="*.py" package/backend/app/ 2>/dev/null || true)
+          if [ -n "$BAD" ]; then
+            echo "::warning::Deprecated datetime.utcnow() found (py3.14+):"
+            echo "$BAD"
+          fi
+
+      - name: Check for deprecated on_event
+        run: |
+          BAD=$(grep -rn "@app.on_event" \
+            --include="*.py" package/ backend/app/ 2>/dev/null || true)
+          if [ -n "$BAD" ]; then
+            echo "::warning::Deprecated @app.on_event found (use lifespan handlers):"
             echo "$BAD"
           fi

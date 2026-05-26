@@ -1,8 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request, Header, Query
-from sqlalchemy.orm import Session, defer
-from sqlalchemy import func, and_, case
-from typing import List, Optional
+import asyncio
 import json
+from datetime import datetime
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request, Header, Query
+from sqlalchemy import func, and_, case
+from sqlalchemy.orm import Session, defer
+from sse_starlette.sse import EventSourceResponse
+
+from app.config import settings
 from app.database import get_db, SessionLocal
 from app.models.models import User, OptimizationSession, OptimizationSegment, ChangeLog
 from app.schemas import (
@@ -13,10 +19,6 @@ from app.services.optimization_service import OptimizationService
 from app.services.concurrency import concurrency_manager
 from app.services.stream_manager import stream_manager
 from app.utils.auth import generate_session_id, get_user_from_token
-from datetime import datetime
-import asyncio
-from app.config import settings
-from sse_starlette.sse import EventSourceResponse
 
 router = APIRouter(prefix="/optimization", tags=["optimization"])
 
