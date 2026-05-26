@@ -104,10 +104,12 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Post Review Comment
+        env:
+          REVIEW_TEXT: ${{ steps.ai_review.outputs.review }}
         uses: actions/github-script@v7
         with:
           script: |
-            const review = `${{ steps.ai_review.outputs.review }}`;
+            const review = process.env.REVIEW_TEXT;
             if (!review || review.includes('not configured') || !context.issue.number) {
               if (!context.issue.number) console.log('Not a PR - skipping comment');
               else console.log('Review skipped:', review);
