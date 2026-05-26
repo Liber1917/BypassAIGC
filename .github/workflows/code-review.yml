@@ -1,0 +1,42 @@
+name: code-review
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for GBK-unsafe emoji in Python files
+        run: |
+          BAD=$(grep -rn '⚠️\|✅\|❌\|🛑\|🚀\|🌐\|✓\|✗\|👋' \
+            --include="*.py" . 2>/dev/null || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::Emoji found in Python files (GBK crash risk):"
+            echo "$BAD"
+            exit 1
+          fi
+          echo "No GBK-unsafe emoji found."
+
+      - name: Check for localStorage in frontend
+        run: |
+          BAD=$(grep -rn "localStorage" package/frontend/src/ \
+            --include="*.js" --include="*.jsx" 2>/dev/null || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::localStorage found (use sessionStorage):"
+            echo "$BAD"
+            exit 1
+          fi
+          echo "All storage uses sessionStorage."
+
+      - name: Check SSE token dead code
+        run: |
+          BAD=$(grep -B5 "if token and not" package/backend/app/routes/optimization.py 2>/dev/null || true)
+          if [ -n "$BAD" ]; then
+            echo "::warning::Possible dead code: SSE token check after Depends"
+            echo "$BAD"
+          fi
