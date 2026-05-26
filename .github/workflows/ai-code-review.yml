@@ -5,7 +5,9 @@ name: ai-code-review
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   review:
@@ -106,8 +108,9 @@ jobs:
         with:
           script: |
             const review = `${{ steps.ai_review.outputs.review }}`;
-            if (!review || review.includes('not configured')) {
-              console.log('Review skipped:', review);
+            if (!review || review.includes('not configured') || !context.issue.number) {
+              if (!context.issue.number) console.log('Not a PR - skipping comment');
+              else console.log('Review skipped:', review);
               return;
             }
             const body = `## AI Code Review\n\n${review}\n\n---\n*Reviewed by DeepSeek*`;
