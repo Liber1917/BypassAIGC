@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request, Header
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request, Header, Query
 from sqlalchemy.orm import Session, defer
 from sqlalchemy import func, and_, case
 from typing import List, Optional
@@ -225,24 +225,37 @@ async def get_session_progress(
     )
 
 
+def _resolve_user(token: Optional[str], authorization: Optional[str], db: Session) -> Optional[User]:
+    """从 query token 或 Authorization header 解析用户（SSE 兼容）"""
+    if token:
+        user_id = get_user_from_token(token)
+        if user_id:
+            user = db.query(User).filter(User.id == user_id, User.is_active.is_(True)).first()
+            if user:
+                return user
+    if authorization and authorization.startswith("Bearer "):
+        jwt_token = authorization.split(" ")[1]
+        user_id = get_user_from_token(jwt_token)
+        if user_id:
+            user = db.query(User).filter(User.id == user_id, User.is_active.is_(True)).first()
+            return user
+    return None
+
+
 @router.get("/sessions/{session_id}/stream")
 async def stream_session_progress(
     session_id: str,
     request: Request,
-    token: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
+    token: Optional[str] = Query(None),
+    authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
     """流式获取会话进度和内容"""
-    # SSE 原生不支持自定义 Header，允许通过 query param 传递 token
-    if token and not current_user:
-        user_id = get_user_from_token(token)
-        if user_id:
-            current_user = db.query(User).filter(User.id == user_id, User.is_active.is_(True)).first()
-            if not current_user:
-                raise HTTPException(status_code=401, detail="令牌无效")
-    
-    user = current_user
+    # SSE 原生不支持自定义 Header，优先通过 query param 传递 token
+    user = _resolve_user(token=token, authorization=authorization, db=db)
+    if not user:
+        raise HTTPException(status_code=401, detail="未提供认证令牌")
+
     session = db.query(OptimizationSession).filter(
         OptimizationSession.session_id == session_id,
         OptimizationSession.user_id == user.id

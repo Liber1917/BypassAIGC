@@ -144,8 +144,8 @@ class TestDeleteRunningJobSemaphoreBug:
     @pytest.mark.asyncio
     async def test_cancel_then_delete_still_holds_slot(self, job_manager):
         """
-        cancel_job() only sets CANCELLED status, does NOT cancel the asyncio task.
-        This is graceful cancellation - correct by design.
+        cancel_job() cancels the asyncio task AND sets CANCELLED status.
+        The semaphore slot is released by task cancellation, not by the status change.
         """
         job_started = asyncio.Event()
         job_can_finish = asyncio.Event()

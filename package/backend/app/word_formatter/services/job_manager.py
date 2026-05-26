@@ -191,7 +191,7 @@ class JobManager:
                     job.status = JobStatus.CANCELLED
                     job.updated_at = datetime.now()
                     job.error = "任务被用户取消"
-                    print(f"[WORD-FORMATTER] ⚠️ 任务被取消 job_id={job_id[:8]}...", flush=True)
+                    print(f"[WORD-FORMATTER] [警告] 任务被取消 job_id={job_id[:8]}...", flush=True)
                     # 重新抛出 CancelledError，让 asyncio 处理
                     raise
 
@@ -199,7 +199,7 @@ class JobManager:
                     import traceback
                     job.status = JobStatus.FAILED
                     job.error = str(e)
-                    print(f"[WORD-FORMATTER] ❌ 任务异常 job_id={job_id[:8]}...", flush=True)
+                    print(f"[WORD-FORMATTER] [失败] 任务异常 job_id={job_id[:8]}...", flush=True)
                     print(f"[WORD-FORMATTER] 异常类型: {type(e).__name__}", flush=True)
                     print(f"[WORD-FORMATTER] 异常信息: {e}", flush=True)
                     print(f"[WORD-FORMATTER] 堆栈跟踪:\n{traceback.format_exc()}", flush=True)
@@ -239,13 +239,13 @@ class JobManager:
             job.status = JobStatus.COMPLETED
             job.output_bytes = result.docx_bytes
             job.output_filename = self._generate_output_filename(job)
-            print(f"[WORD-FORMATTER] ✅ 格式化任务完成 job_id={job.job_id[:8]}...", flush=True)
+            print(f"[WORD-FORMATTER] [成功] 格式化任务完成 job_id={job.job_id[:8]}...", flush=True)
             print(f"[WORD-FORMATTER] 输出文件: {job.output_filename}", flush=True)
             print(f"[WORD-FORMATTER] 文件大小: {len(result.docx_bytes or b'')} 字节", flush=True)
         else:
             job.status = JobStatus.FAILED
             job.error = result.error
-            print(f"[WORD-FORMATTER] ❌ 格式化任务失败 job_id={job.job_id[:8]}...", flush=True)
+            print(f"[WORD-FORMATTER] [失败] 格式化任务失败 job_id={job.job_id[:8]}...", flush=True)
             print(f"[WORD-FORMATTER] 错误: {result.error}", flush=True)
 
     async def _run_preprocess_job(self, job: Job, ai_service: Any) -> None:
@@ -276,13 +276,13 @@ class JobManager:
 
         if result.success:
             job.status = JobStatus.COMPLETED
-            print(f"[WORD-FORMATTER] ✅ 预处理任务完成 job_id={job.job_id[:8]}...", flush=True)
+            print(f"[WORD-FORMATTER] [成功] 预处理任务完成 job_id={job.job_id[:8]}...", flush=True)
             print(f"[WORD-FORMATTER] 段落数: {len(result.paragraphs)}", flush=True)
             print(f"[WORD-FORMATTER] 一致性校验: {'通过' if result.integrity_check_passed else '失败'}", flush=True)
         else:
             job.status = JobStatus.FAILED
             job.error = result.error
-            print(f"[WORD-FORMATTER] ❌ 预处理任务失败 job_id={job.job_id[:8]}...", flush=True)
+            print(f"[WORD-FORMATTER] [失败] 预处理任务失败 job_id={job.job_id[:8]}...", flush=True)
             print(f"[WORD-FORMATTER] 错误: {result.error}", flush=True)
 
     def _generate_output_filename(self, job: Job) -> str:

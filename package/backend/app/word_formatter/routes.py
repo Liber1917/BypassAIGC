@@ -594,7 +594,7 @@ async def stream_job_progress(
     db: Session = Depends(get_db)
 ):
     """Stream job progress via SSE."""
-    user = get_current_user(authorization=authorization, card_key=card_key, db=db)
+    user = get_current_user(authorization=authorization, card_key=card_key, token=token, db=db)
 
     job_manager = get_job_manager()
     job = job_manager.get_job(job_id)
@@ -626,7 +626,7 @@ async def download_result(
     db: Session = Depends(get_db)
 ):
     """Download the formatted document."""
-    user = get_current_user(authorization=authorization, card_key=card_key, db=db)
+    user = get_current_user(authorization=authorization, card_key=card_key, token=token, db=db)
 
     job_manager = get_job_manager()
     job = job_manager.get_job(job_id)
@@ -907,7 +907,7 @@ async def stream_preprocess_progress(
     db: Session = Depends(get_db)
 ):
     """Stream preprocessing progress via SSE."""
-    user = get_current_user(authorization=authorization, card_key=card_key, db=db)
+    user = get_current_user(authorization=authorization, card_key=card_key, token=token, db=db)
 
     job_manager = get_job_manager()
     job = job_manager.get_job(job_id)
