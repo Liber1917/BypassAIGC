@@ -27,7 +27,7 @@ def check_database_connection():
         print("[OK] 数据库连接成功")
         return True
     except Exception as e:
-        print(f"✗ 数据库连接失败: {str(e)}")
+        print(f"[FAIL] 数据库连接失败: {str(e)}")
         return False
 
 
@@ -52,13 +52,13 @@ def check_tables():
         missing_tables = [t for t in expected_tables if t not in tables]
         
         if missing_tables:
-            print(f"⚠ 缺少以下表: {', '.join(missing_tables)}")
+            print(f"[WARN] 缺少以下表: {', '.join(missing_tables)}")
             return False
         else:
             print(f"[OK] 所有必需的表都存在 ({len(expected_tables)} 个)")
             return True
     except Exception as e:
-        print(f"✗ 检查表失败: {str(e)}")
+        print(f"[FAIL] 检查表失败: {str(e)}")
         return False
 
 
@@ -72,7 +72,7 @@ def display_table_info():
         
         for table_name in sorted(tables):
             columns = inspector.get_columns(table_name)
-            print(f"\n📊 {table_name} ({len(columns)} 列)")
+            print(f"\n[DATA] {table_name} ({len(columns)} 列)")
             for col in columns[:5]:  # 只显示前5列
                 col_type = str(col['type'])
                 nullable = "NULL" if col['nullable'] else "NOT NULL"
@@ -80,7 +80,7 @@ def display_table_info():
             if len(columns) > 5:
                 print(f"   ... 还有 {len(columns) - 5} 列")
     except Exception as e:
-        print(f"✗ 获取表信息失败: {str(e)}")
+        print(f"[FAIL] 获取表信息失败: {str(e)}")
 
 
 def check_data_integrity():
@@ -105,7 +105,7 @@ def check_data_integrity():
         finally:
             db.close()
     except Exception as e:
-        print(f"✗ 数据完整性检查失败: {str(e)}")
+        print(f"[FAIL] 数据完整性检查失败: {str(e)}")
         return False
 
 
@@ -145,7 +145,7 @@ def test_crud_operations():
         finally:
             db.close()
     except Exception as e:
-        print(f"✗ CRUD 操作测试失败: {str(e)}")
+        print(f"[FAIL] CRUD 操作测试失败: {str(e)}")
         return False
 
 
@@ -158,13 +158,13 @@ def main():
     # 检查环境变量
     env_file = backend_dir / ".env"
     if not env_file.exists():
-        print(f"\n⚠ 警告: 未找到 .env 文件")
+        print(f"\n[WARN] 警告: 未找到 .env 文件")
         print(f"   预期位置: {env_file}")
         print("   将使用默认配置\n")
     
     # 1. 检查数据库连接
     if not check_database_connection():
-        print("\n❌ 数据库连接失败，无法继续")
+        print("\n[ERROR] 数据库连接失败，无法继续")
         sys.exit(1)
     
     # 2. 初始化数据库
@@ -174,14 +174,14 @@ def main():
     try:
         init_db()
     except Exception as e:
-        print(f"\n❌ 数据库初始化失败: {str(e)}")
+        print(f"\n[ERROR] 数据库初始化失败: {str(e)}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
     
     # 3. 检查表
     if not check_tables():
-        print("\n⚠ 警告: 某些表缺失")
+        print("\n[WARN] 警告: 某些表缺失")
     
     # 4. 显示表信息
     display_table_info()
@@ -209,7 +209,7 @@ def main():
         
         if db_path.exists():
             size_mb = db_path.stat().st_size / (1024 * 1024)
-            print(f"\n📁 数据库文件: {db_path}")
+            print(f"\n[DIR] 数据库文件: {db_path}")
             print(f"   大小: {size_mb:.2f} MB")
 
 
@@ -217,10 +217,10 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n⚠ 用户中断")
+        print("\n\n[WARN] 用户中断")
         sys.exit(0)
     except Exception as e:
-        print(f"\n❌ 发生错误: {str(e)}")
+        print(f"\n[ERROR] 发生错误: {str(e)}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

@@ -18,16 +18,9 @@ jobs:
       - name: Install isort
         run: pip install isort
 
-      - name: Check for GBK-unsafe emoji in Python files
+      - name: Check for GBK-unsafe characters in print()/logging calls
         run: |
-          BAD=$(grep -rn '⚠️\|✅\|❌\|🛑\|🚀\|🌐\|✓\|✗\|👋' \
-            --include="*.py" . 2>/dev/null || true)
-          if [ -n "$BAD" ]; then
-            echo "::error::Emoji found in Python files (GBK crash risk):"
-            echo "$BAD"
-            exit 1
-          fi
-          echo "No GBK-unsafe emoji found."
+          python scripts/check_gbk_safety.py .
 
       - name: Check for localStorage in frontend
         run: |
