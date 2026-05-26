@@ -1,6 +1,26 @@
 # Copilot Review Instructions — BypassAIGC
 
-## 审查重点
+## PR 工作流规范
+
+### 0. 先 Plan 再实现
+- 每个 PR 前必须在 Issue/Discussion 中贴出方案：
+  - 问题描述 + 根因
+  - 修改的文件列表
+  - 每个文件的改动概要
+  - 测试方案
+- 方案确认后再开始编码
+
+### 1. 每次只改一个问题
+- 一个 PR 只解决一个主题（emoji 归 emoji，并发归并发）
+- 文件数建议 ≤ 10，行数 ≤ 500
+- 超出的必须拆分为多个 PR
+
+### 2. 等待 Review 再 Merge
+- PR 提交后等待 CI 通过（code-review + ai-code-review）
+- AI Review 指出的问题必须先修复再 merge
+- 修复使用单独的 commit，不 amend
+
+### 3. 审查重点
 
 ### 1. SSE/EventSource 路由
 - `?token=` query param 必须能被实际使用，不能有死代码
