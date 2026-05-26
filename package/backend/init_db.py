@@ -24,7 +24,7 @@ def check_database_connection():
         with engine.connect() as conn:
             result = conn.execute(text("SELECT 1"))
             result.fetchone()
-        print("✓ 数据库连接成功")
+        print("[OK] 数据库连接成功")
         return True
     except Exception as e:
         print(f"✗ 数据库连接失败: {str(e)}")
@@ -55,7 +55,7 @@ def check_tables():
             print(f"⚠ 缺少以下表: {', '.join(missing_tables)}")
             return False
         else:
-            print(f"✓ 所有必需的表都存在 ({len(expected_tables)} 个)")
+            print(f"[OK] 所有必需的表都存在 ({len(expected_tables)} 个)")
             return True
     except Exception as e:
         print(f"✗ 检查表失败: {str(e)}")
@@ -91,15 +91,15 @@ def check_data_integrity():
         try:
             # 检查用户数量
             user_count = db.query(User).count()
-            print(f"✓ 用户数量: {user_count}")
+            print(f"[OK] 用户数量: {user_count}")
             
             # 检查会话数量
             session_count = db.query(OptimizationSession).count()
-            print(f"✓ 会话数量: {session_count}")
+            print(f"[OK] 会话数量: {session_count}")
             
             # 检查系统提示词
             system_prompts = db.query(CustomPrompt).filter(CustomPrompt.is_system == True).count()
-            print(f"✓ 系统提示词数量: {system_prompts}")
+            print(f"[OK] 系统提示词数量: {system_prompts}")
             
             return True
         finally:
@@ -122,24 +122,24 @@ def test_crud_operations():
             )
             db.add(test_setting)
             db.commit()
-            print("✓ CREATE 操作成功")
+            print("[OK] CREATE 操作成功")
             
             # 测试读取
             setting = db.query(SystemSetting).filter(
                 SystemSetting.key == "test_key_delete_me"
             ).first()
             if setting:
-                print("✓ READ 操作成功")
+                print("[OK] READ 操作成功")
             
             # 测试更新
             setting.value = "updated_value"
             db.commit()
-            print("✓ UPDATE 操作成功")
+            print("[OK] UPDATE 操作成功")
             
             # 测试删除
             db.delete(setting)
             db.commit()
-            print("✓ DELETE 操作成功")
+            print("[OK] DELETE 操作成功")
             
             return True
         finally:
@@ -194,7 +194,7 @@ def main():
     
     # 总结
     print("\n" + "=" * 60)
-    print("✓ 数据库检查完成!")
+    print("[OK] 数据库检查完成!")
     print("=" * 60)
     print("\n数据库已就绪，可以启动应用")
     

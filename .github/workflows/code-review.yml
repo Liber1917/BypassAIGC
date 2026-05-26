@@ -51,10 +51,9 @@ jobs:
       - name: Check import order (isort)
         run: |
           cd package/backend
+          # 只警告不阻止，用 || true 避免 exit code 1 中断 job
           isort --check-only app/ --diff --profile black 2>&1 \
-            | head -60 || true
-          # 只警告不阻止（避免一次 PR 修太多文件）
-          echo "::warning::Import ordering issues may exist. Run 'isort app/' locally to fix."
+            | head -60 || echo "isort found issues (non-blocking)"
 
       - name: Check for deprecated utcnow()
         run: |
