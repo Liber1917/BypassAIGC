@@ -1,4 +1,4 @@
-# 自托管 AI Code Review — 使用 Gemini API
+# 自托管 AI Code Review — 使用 DeepSeek 官方 API
 # 触发条件：PR 打开/同步
 
 name: ai-code-review
@@ -28,19 +28,18 @@ jobs:
             ':!package/backend/tests/' \
             ':!package/frontend/package-lock.json' \
             ':!*.lock' 2>/dev/null | head -3000)
-          # 限制 diff 长度，避免 token 爆炸
           echo "diff<<EOF" >> $GITHUB_OUTPUT
           echo "$DIFF" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: AI Review
+      - name: AI Review via DeepSeek
         id: ai_review
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           DIFF: ${{ steps.diff.outputs.diff }}
         run: |
-          if [ -z "$GEMINI_API_KEY" ]; then
-            echo "review=GEMINI_API_KEY not configured" >> $GITHUB_OUTPUT
+          if [ -z "$DEEPSEEK_API_KEY" ]; then
+            echo "review=DEEPSEEK_API_KEY not configured" >> $GITHUB_OUTPUT
             exit 0
           fi
           if [ -z "$DIFF" ]; then
@@ -48,18 +47,17 @@ jobs:
             exit 0
           fi
 
-          # 用 jq 构造请求体
           PROMPT="你是一个严格的代码审查者。审查以下 PR diff，按优先级输出问题：
 
           ## 优先级检查
 
           ### P0 (必须修复)
           - SSE 路由中 ?token= 参数是否被 Depends() 提前 401 导致无法到达？
-          - print() 中是否有 emoji 字符？(⚠️ ✅ ❌ 🚀 🛑)
+          - print()/logging 中是否有 emoji 字符？(⚠️ ✅ ❌ 🚀 🛑)
           - Query(None) 声明的参数在 get_current_user() 调用中是否缺失？
+          - localStroage 是否被使用（必须用 sessionStorage）？
 
           ### P1 (建议修复)
-          - 前端是否使用了 localStorage 而非 sessionStorage？
           - 版本号是否不一致？
           - 注释/文档与实际实现是否矛盾？
 
@@ -67,30 +65,36 @@ jobs:
           - 死代码/不可达分支
           - 异常处理是否合理
 
-          输出格式：每行一个 [P0/P1/P2] + 文件名:行号 + 问题描述
+          输出格式：每行一个 [P0/P1/P2] + 文件名:行号 + 问题描述。无问题则不输出。
 
           Diff:
           ${DIFF}"
 
           REQUEST_BODY=$(jq -n --arg prompt "$PROMPT" '{
-            "contents": [{
-              "parts": [{"text": $prompt}]
-            }]
+            "model": "deepseek-chat",
+            "messages": [
+              {"role": "system", "content": "你是一个严格的 Python/JavaScript 代码审查者，关注安全性、正确性和健壮性。使用中文回复。"},
+              {"role": "user", "content": $prompt}
+            ],
+            "temperature": 0.1,
+            "max_tokens": 2000
           }')
 
           RESPONSE=$(curl -s -X POST \
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}" \
+            "https://api.deepseek.com/v1/chat/completions" \
             -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${DEEPSEEK_API_KEY}" \
             -d "$REQUEST_BODY")
 
           REVIEW_TEXT=$(echo "$RESPONSE" | python3 -c "
           import sys, json
           data = json.load(sys.stdin)
           try:
-              text = data['candidates'][0]['content']['parts'][0]['text']
+              text = data['choices'][0]['message']['content']
               print(text[:4000])
-          except:
-              print('Review generation failed')
+          except Exception as e:
+              print(f'Review parse failed: {e}')
+              import sys; sys.stderr.write(json.dumps(data, indent=2)[:500])
           " 2>/dev/null || echo "Review parse failed")
 
           echo "review<<EOF" >> $GITHUB_OUTPUT
@@ -106,7 +110,7 @@ jobs:
               console.log('Review skipped:', review);
               return;
             }
-            const body = `## 🤖 AI Code Review\n\n${review}\n\n---\n*Reviewed by Gemini 2.5 Pro*`;
+            const body = `## AI Code Review\n\n${review}\n\n---\n*Reviewed by DeepSeek*`;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
