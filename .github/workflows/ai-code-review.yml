@@ -1,5 +1,5 @@
-# 自托管 AI Code Review — 使用 DeepSeek 官方 API
-# 触发条件：PR 打开/同步
+# AI Code Review — 多阶段审查（自动扫描→DeepSeek分析→贴评论）
+# 模拟 Copilot Code Review 的 search_dir + read_code 流程
 
 name: ai-code-review
 on:
@@ -21,8 +21,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get PR diff
-        id: diff
+      - name: Get PR diff (read_code equivalent)
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
           DIFF=$(git diff origin/${{ github.event.pull_request.base.ref }} -- \
@@ -30,70 +29,119 @@ jobs:
             ':!package/backend/tests/' \
             ':!package/frontend/package-lock.json' \
             ':!*.lock' 2>/dev/null | head -3000)
-          echo "diff<<EOF" >> $GITHUB_OUTPUT
-          echo "$DIFF" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "$DIFF" > /tmp/pr_diff.txt
 
-      - name: AI Review via DeepSeek
-        id: ai_review
+      - name: Auto-scan with search_dir patterns
+        id: scan
+        run: |
+          python scripts/code_search.py 2>&1 || true
+          echo "scan_done=true" >> $GITHUB_OUTPUT
+
+      - name: Read specific suspicious code (read_code equivalent)
+        run: |
+          # 读取 SSE 路由中的 token 处理
+          python3 -c "
+import json, pathlib
+findings = []
+routes_file = pathlib.Path('package/backend/app/routes/optimization.py')
+if routes_file.exists():
+    lines = routes_file.read_text().split('\n')
+    for i, line in enumerate(lines, 1):
+        if 'stream_session_progress' in line or '_resolve_user' in line or 'Depends(get_current_user)' in line:
+            start = max(0, i-3)
+            end = min(len(lines), i+10)
+            findings.append({'file': 'package/backend/app/routes/optimization.py',
+                           'context': '\n'.join(f'{j}:{lines[j-1]}' for j in range(start+1, end+1))})
+# 读取 word_formatter 的 token 传参
+wf_file = pathlib.Path('package/backend/app/word_formatter/routes.py')
+if wf_file.exists():
+    lines = wf_file.read_text().split('\n')
+    for i, line in enumerate(lines, 1):
+        if '= get_current_user(' in line and 'def get_current_user' not in line:
+            start = max(0, i-4)
+            end = min(len(lines), i+1)
+            findings.append({'file': 'package/backend/app/word_formatter/routes.py',
+                           'context': '\n'.join(f'{j}:{lines[j-1]}' for j in range(start+1, end+1))})
+with open('/tmp/read_code_snippets.json', 'w') as f:
+    json.dump(findings, f, ensure_ascii=False)
+print(f'Read {len(findings)} suspicious code regions')
+" 2>&1
+
+      - name: AI Analysis via DeepSeek
+        id: analyze
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          DIFF: ${{ steps.diff.outputs.diff }}
         run: |
           if [ -z "$DEEPSEEK_API_KEY" ]; then
-            echo "review not configured" > /tmp/review.txt
-            exit 0
-          fi
-          if [ -z "$DIFF" ]; then
-            echo "no diff to review" > /tmp/review.txt
+            echo "DEEPSEEK_API_KEY not configured" > /tmp/review.txt
             exit 0
           fi
 
-          PROMPT="你是一个严格的代码审查者。审查以下 PR diff，按优先级输出问题：
+          FINDINGS=""
+          DIFF=""
+          CODE_SNIPPETS=""
 
-          ## 优先级检查
+          [ -f /tmp/review_findings.json ] && FINDINGS=$(python3 -c "
+import json
+data = json.load(open('/tmp/review_findings.json'))
+if not data: print('(自动扫描无发现问题)')
+else:
+    for f in data:
+        print(f\"[{f.get('severity','')}] {f.get('file','')}:{f.get('line','')} {f.get('desc','')}\")
+        if f.get('snippet'):
+            print(f'  -> {f[\"snippet\"]}')
+")
+          [ -f /tmp/pr_diff.txt ] && DIFF=$(head -2000 /tmp/pr_diff.txt)
+          [ -f /tmp/read_code_snippets.json ] && CODE_SNIPPETS=$(python3 -c "
+import json
+data = json.load(open('/tmp/read_code_snippets.json'))
+for f in data:
+    print(f'=== {f[\"file\"]} ===')
+    print(f['context'])
+    print()
+")
 
-          ### P0 (必须修复)
-          - SSE 路由中 ?token= 参数是否被 Depends() 提前 401 导致无法到达？
-          - print()/logging 中是否有 emoji 字符？
-          - Query(None) 声明的参数在 get_current_user() 调用中是否缺失？
-          - localStroage 是否被使用（必须用 sessionStorage）？
+          PROMPT="## 角色
+你是一个严格的 Python/JavaScript 代码审查者。
 
-          ### P1 (建议修复)
-          - 版本号是否不一致？
-          - 注释/文档与实际实现是否矛盾？
+## 第1步：验证自动扫描结果
+以下是自动化扫描工具发现的问题，请判断是否为真阳性：
 
-          ### P2 (风格)
-          - 死代码/不可达分支
-          - 异常处理是否合理
+${FINDINGS:-无自动发现}
 
-          输出格式：每行一个 [P0/P1/P2] + 文件名:行号 + 问题描述。无问题则不输出。
+## 第2步：审查关键代码片段
+以下是自动从 PR 中提取的关键代码区域（SSE路由、token传参等），请审查：
 
-          Diff:
-          ${DIFF}"
+${CODE_SNIPPETS:-无提取的代码片段}
+
+## 第3步：审查 Diff
+${DIFF:-无 diff}
+
+## 输出格式
+每行一个 [P0/P1/P2] + 文件名:行号 + 问题描述。
+P0=必须修复，P1=建议修复，P2=风格问题。
+如果自动扫描的结果是误报，请明确指出"误报: [原描述] 原因：xxx"。
+没有发现问题则输出：审查通过，无问题。"
 
           REQUEST_BODY=$(jq -n --arg prompt "$PROMPT" '{
             "model": "deepseek-chat",
             "messages": [
-              {"role": "system", "content": "你是一个严格的 Python/JavaScript 代码审查者，关注安全性、正确性和健壮性。使用中文回复。"},
+              {"role": "system", "content": "你是一个代码审查者。先验证自动扫描结果（确认或指误报），再审查 diff，输出结构化评审。用中文。"},
               {"role": "user", "content": $prompt}
             ],
             "temperature": 0.1,
-            "max_tokens": 2000
+            "max_tokens": 4000
           }')
 
-          RESPONSE=$(curl -s -X POST \
-            "https://api.deepseek.com/v1/chat/completions" \
+          curl -s -X POST "https://api.deepseek.com/v1/chat/completions" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${DEEPSEEK_API_KEY}" \
-            -d "$REQUEST_BODY")
-
-          echo "$RESPONSE" | python3 -c "
+            -d "$REQUEST_BODY" | python3 -c "
           import sys, json
           data = json.load(sys.stdin)
           try:
               text = data['choices'][0]['message']['content']
-              print(text[:4000])
+              print(text[:5000])
           except Exception as e:
               print(f'Review parse failed: {e}')
               import sys; sys.stderr.write(json.dumps(data, indent=2)[:500])
@@ -105,9 +153,8 @@ jobs:
           script: |
             const fs = require('fs');
             const review = fs.readFileSync('/tmp/review.txt', 'utf8').trim();
-            if (!review || review.includes('not configured') || review.includes('no diff') || !context.issue.number) {
-              if (!context.issue.number) console.log('Not a PR - skipping');
-              else console.log('Review skipped:', review);
+            if (!review || review.includes('not configured') || !context.issue.number) {
+              console.log('Review skipped');
               return;
             }
             const body = '## AI Code Review\n\n' + review + '\n\n---\n*Reviewed by DeepSeek*';
